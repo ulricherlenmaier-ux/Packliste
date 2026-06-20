@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Packliste">
+<title>Packliste</title>
+<style>
+  :root {
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE9;
+    --border: #E2DED6;
+    --text: #1A1814;
+    --text2: #6B6560;
+    --text3: #9E9891;
+    --accent: #3D6B4F;
+    --accent-light: #EAF2ED;
+    --accent2: #8B5E3C;
+    --accent2-light: #F5EDE5;
+    --warn: #C0392B;
+    --warn-light: #FDECEA;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --tab-height: 56px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex-direction: column; min-height: 100vh; padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 8px); }
+  .screen.active { display: flex; }
+
+  /* ── HEADER ── */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(247,246,243,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px 10px;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .header-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-sub { font-size: 13px; color: var(--text2); margin-top: 1px; }
+  .header-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; }
+  .header-btn:active { opacity: 0.7; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
+
+  /* ── FILTER CHIPS ── */
+  .filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; scrollbar-width: none; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0; border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid transparent;
+    transition: all 0.15s;
+    background: var(--surface); border-color: var(--border); color: var(--text2);
+  }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip:active { opacity: 0.7; }
+
+  /* ── SECTION ── */
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text3); padding: 14px 16px 6px;
+  }
+
+  /* ── ITEM CARD ── */
+  .items-list { padding: 0 12px; display: flex; flex-direction: column; gap: 2px; }
+
+  .item-card {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 12px;
+    transition: opacity 0.2s;
+    position: relative;
+  }
+  .item-card.packed { opacity: 0.45; }
+  .item-card:active { background: var(--surface2); }
+
+  .checkbox {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s;
+    background: var(--surface);
+  }
+  .checkbox.checked { background: var(--accent); border-color: var(--accent); }
+  .checkbox svg { display: none; }
+  .checkbox.checked svg { display: block; }
+
+  .item-body { flex: 1; min-width: 0; }
+  .item-name { font-size: 15px; font-weight: 500; line-height: 1.3; }
+  .item-card.packed .item-name { text-decoration: line-through; color: var(--text3); }
+  .item-note { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .item-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .badge {
+    font-size: 10px; font-weight: 600; border-radius: 6px; padding: 2px 7px;
+    letter-spacing: 0.2px;
+  }
+  .badge-ort { background: #EEF2FF; color: #4F62B8; }
+  .badge-typ { background: var(--accent-light); color: var(--accent); }
+  .badge-person { background: var(--accent2-light); color: var(--accent2); }
+
+  .item-expand-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: var(--text3); font-size: 18px; line-height: 1; flex-shrink: 0; margin-top: 0;
+    width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── PERSON SUB-ITEMS ── */
+  .person-items { padding: 0 12px 2px 46px; display: flex; flex-direction: column; gap: 2px; }
+  .person-item {
+    background: var(--surface2); border-radius: var(--radius-sm);
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    cursor: pointer;
+  }
+  .person-item.packed { opacity: 0.45; }
+  .person-item .person-name { font-size: 13px; font-weight: 600; color: var(--accent2); flex: 1; }
+  .person-item.packed .person-name { text-decoration: line-through; color: var(--text3); }
+  .person-checkbox {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .person-checkbox.checked { background: var(--accent2); border-color: var(--accent2); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { text-align: center; padding: 60px 32px; color: var(--text2); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; line-height: 1.5; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: rgba(247,246,243,0.95);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-bottom: var(--safe-bottom);
+    z-index: 200;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 8px 4px; cursor: pointer; gap: 3px; border: none; background: none;
+    color: var(--text3); transition: color 0.15s;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item span { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; }
+
+  /* ── SETUP SCREEN ── */
+  .setup-section { padding: 16px; }
+  .setup-section h3 { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 10px; }
+  .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .toggle-card {
+    background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 12px; cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .toggle-card.active { border-color: var(--accent); background: var(--accent-light); }
+  .toggle-card .tc-icon { font-size: 24px; margin-bottom: 4px; }
+  .toggle-card .tc-label { font-size: 13px; font-weight: 600; }
+  .toggle-card.active .tc-label { color: var(--accent); }
+
+  .person-toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .person-card {
+    background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 10px 12px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+  }
+  .person-card.active { border-color: var(--accent2); background: var(--accent2-light); }
+  .person-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--text2); }
+  .person-card.active .person-avatar { background: var(--accent2); color: #fff; }
+  .person-card .p-name { font-size: 14px; font-weight: 600; }
+  .person-card.active .p-name { color: var(--accent2); }
+
+  .start-btn {
+    margin: 20px 16px 8px; padding: 16px; background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius); font-size: 16px; font-weight: 700;
+    cursor: pointer; width: calc(100% - 32px); transition: opacity 0.15s;
+  }
+  .start-btn:active { opacity: 0.85; }
+
+  /* ── MANAGE SCREEN ── */
+  .manage-item {
+    background: var(--surface); border-radius: var(--radius-sm);
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; margin-bottom: 2px;
+  }
+  .manage-item-name { flex: 1; font-size: 14px; }
+  .manage-edit-btn { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px; color: var(--text3); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 430px; padding: 20px 20px calc(20px + var(--safe-bottom));
+    max-height: 85vh; overflow-y: auto;
+  }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 15px; font-family: var(--font); background: var(--surface); color: var(--text);
+  }
+  .form-input:focus { outline: none; border-color: var(--accent); }
+  .chip-select { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-option {
+    border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--text2);
+    transition: all 0.15s;
+  }
+  .chip-option.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-secondary { flex: 1; padding: 13px; background: var(--surface2); border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; color: var(--text2); }
+  .btn-primary { flex: 2; padding: 13px; background: var(--accent); border: none; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; color: #fff; }
+  .btn-danger { flex: 1; padding: 13px; background: var(--warn-light); border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; color: var(--warn); }
+  .btn-primary:active, .btn-secondary:active, .btn-danger:active { opacity: 0.8; }
+
+  /* ── STATS ── */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px 4px; }
+  .stat-card { background: var(--surface); border-radius: var(--radius); padding: 12px 14px; }
+  .stat-num { font-size: 26px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ── SCROLLABLE CONTENT ── */
+  .scroll-content { flex: 1; overflow-y: auto; }
+
+  .divider { height: 1px; background: var(--border); margin: 6px 12px; }
+
+  /* Search bar */
+  .search-wrap { padding: 0 16px 8px; }
+  .search-input {
+    width: 100%; padding: 9px 14px 9px 36px; border: 1.5px solid var(--border);
+    border-radius: 20px; font-size: 14px; background: var(--surface); color: var(--text);
+    font-family: var(--font); position: relative;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .search-wrap { position: relative; }
+  .search-icon { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+
+  .fab {
+    position: fixed; bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px); right: 16px;
+    width: 52px; height: 52px; border-radius: 50%; background: var(--accent);
+    color: #fff; border: none; font-size: 24px; cursor: pointer; z-index: 150;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(61,107,79,0.35);
+  }
+  .fab:active { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SCREEN: SETUP ═══ -->
+<div class="screen active" id="screen-setup">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">🎒 Packliste</div>
+        <div class="header-sub">Session konfigurieren</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-content">
+    <div class="setup-section">
+      <h3>Reisetyp</h3>
+      <div class="toggle-grid" id="reisetyp-grid"></div>
+    </div>
+    <div class="setup-section">
+      <h3>Personen</h3>
+      <div class="person-toggle-grid" id="person-grid"></div>
+    </div>
+    <div class="setup-section">
+      <h3>Ort (optional — alle Orte wenn leer)</h3>
+      <div class="toggle-grid" id="ort-grid"></div>
+    </div>
+    <button class="start-btn" onclick="startSession()">Packen starten →</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: PACK ═══ -->
+<div class="screen" id="screen-pack">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title" id="pack-title">Packen</div>
+        <div class="header-sub" id="pack-sub"></div>
+      </div>
+      <button class="header-btn" onclick="resetPacked()">Reset</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div class="filter-row" id="filter-row"></div>
+  <div class="search-wrap">
+    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="search-input" id="search-input" placeholder="Suchen…" oninput="renderPackList()" style="padding-left:36px;">
+  </div>
+  <div class="scroll-content" id="pack-list"></div>
+</div>
+
+<!-- ═══ SCREEN: STATS ═══ -->
+<div class="screen" id="screen-stats">
+  <div class="header">
+    <div class="header-top"><div class="header-title">Übersicht</div></div>
+  </div>
+  <div class="scroll-content" id="stats-content"></div>
+</div>
+
+<!-- ═══ SCREEN: MANAGE ═══ -->
+<div class="screen" id="screen-manage">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-title">Alle Items</div>
+    </div>
+  </div>
+  <div class="search-wrap" style="padding:12px 16px 4px;">
+    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="search-input" id="manage-search" placeholder="Suchen…" oninput="renderManageList()" style="padding-left:36px;">
+  </div>
+  <div class="scroll-content" id="manage-list"></div>
+  <button class="fab" onclick="openAddModal()">+</button>
+</div>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-setup" onclick="showScreen('setup')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Start</span>
+  </button>
+  <button class="nav-item" id="nav-pack" onclick="showScreen('pack')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <span>Packen</span>
+  </button>
+  <button class="nav-item" id="nav-stats" onclick="showScreen('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Status</span>
+  </button>
+  <button class="nav-item" id="nav-manage" onclick="showScreen('manage')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Liste</span>
+  </button>
+</nav>
+
+<!-- ═══ ITEM MODAL ═══ -->
+<div class="modal-overlay" id="item-modal" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h3 id="modal-title">Item bearbeiten</h3>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="edit-name" placeholder="z.B. MTB Helm">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notiz</label>
+      <input class="form-input" id="edit-note" placeholder="z.B. Imprägnieren!!">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ort</label>
+      <div class="chip-select" id="edit-ort"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kategorie</label>
+      <div class="chip-select" id="edit-typ"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reisetyp</label>
+      <div class="chip-select" id="edit-reise"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Personen (leer = Ulrich)</label>
+      <div class="chip-select" id="edit-persons"></div>
+    </div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+
+const ORTE = ['Keller', 'EG', 'OG1', 'OG2', 'Auto/Camper'];
+const TYPEN = ['Küche', 'Kleidung', 'Technik', 'Sport', 'MTB', 'Outdoor', 'Camping', 'Baden', 'Spiele', 'Dokumente', 'Orga', 'Essen'];
+const REISETYPEN = ['Camping', 'MTB-Trip', 'Badeurlaub', 'Winterurlaub', 'Städtetrip', 'Alpin', 'Immer'];
+const PERSONS = ['Ulrich', 'Kristin', 'Paul', 'Moritz'];
+const PERSON_INITIALS = { Ulrich: 'U', Kristin: 'K', Paul: 'P', Moritz: 'M' };
+const REISETYP_ICONS = { Camping:'🏕', 'MTB-Trip':'🚵', Badeurlaub:'🏖', Winterurlaub:'⛷', Städtetrip:'🏙', Alpin:'⛰', Immer:'✅' };
+const ORT_ICONS = { Keller:'🔑', EG:'🛋', OG1:'🛁', OG2:'🛏', 'Auto/Camper':'🚐' };
+
+// ── INITIAL ITEMS ──
+const DEFAULT_ITEMS = [
+  // KELLER - Orga
+  { id:'k1', name:'Campingtasche (IKEA blau)', note:'', ort:['Keller'], typ:['Orga'], reise:['Camping'], persons:['Ulrich','Kristin'] },
+  { id:'k2', name:'Technik-Tasche 1 (schwarz)', note:'Schon gepackt', ort:['Keller'], typ:['Technik','Orga'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'k3', name:'Technik-Tasche 2 (transparent)', note:'Für die Fahrt', ort:['Keller'], typ:['Technik','Orga'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'k4', name:'Kulturbeutel', note:'', ort:['Keller'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'k5', name:'Transparente Taschen', note:'', ort:['Keller'], typ:['Orga'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k6', name:'Box faltbar (Fahrersitz)', note:'Hängt um den Fahrersitz', ort:['Keller'], typ:['Orga'], reise:['Camping'], persons:['Ulrich'] },
+
+  // KELLER - Küche
+  { id:'k7', name:'Spülmittel', note:'', ort:['Keller'], typ:['Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k8', name:'Schwamm / Geschirr', note:'', ort:['Keller'], typ:['Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k9', name:'Müsli', note:'', ort:['Keller'], typ:['Küche','Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k10', name:'Espresso', note:'', ort:['Keller'], typ:['Küche','Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k11', name:'Tee', note:'', ort:['Keller'], typ:['Küche','Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k12', name:'Ersatzkartusche Gas', note:'Siehe Camping-Tasche', ort:['Keller'], typ:['Camping','Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k13', name:'Salz- und Pfeffermühle', note:'', ort:['Keller'], typ:['Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k14', name:'Tupper-Gefässe', note:'', ort:['Keller'], typ:['Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k15', name:'Waschmittel', note:'', ort:['Keller'], typ:['Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k16', name:'Balsamico / Olivenöl', note:'Auffüllen!', ort:['Keller'], typ:['Küche','Essen'], reise:['Camping'], persons:['Ulrich'] },
+
+  // KELLER - Outdoor
+  { id:'k17', name:'Fahrradträger', note:'', ort:['Keller'], typ:['Outdoor','MTB'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'k18', name:'Daypack', note:'', ort:['Keller'], typ:['Outdoor'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub'], persons:['Ulrich'] },
+  { id:'k19', name:'Wanderschuhe', note:'', ort:['Keller'], typ:['Outdoor'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'k20', name:'Outdoor Turnschuhe', note:'', ort:['Keller'], typ:['Outdoor'], reise:['Camping','MTB-Trip','Badeurlaub'], persons:['Ulrich'] },
+  { id:'k21', name:'Normale Fahrradhelme', note:'2x', ort:['Keller'], typ:['Outdoor'], reise:['Camping'], persons:['Ulrich','Kristin'] },
+  { id:'k22', name:'Satteltasche', note:'', ort:['Keller'], typ:['MTB'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'k23', name:'Warntafel Fahrradträger', note:'2x — für Italien ggf. andere Länder', ort:['Keller'], typ:['Outdoor','MTB'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+
+  // KELLER - MTB
+  { id:'k24', name:'Handyhalter Fahrrad', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k25', name:'MTB Helm', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich','Paul'] },
+  { id:'k26', name:'Fahrradunterhose', note:'', ort:['Keller'], typ:['MTB','Kleidung'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k27', name:'Fahrradhandschuhe', note:'2x', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich','Kristin'] },
+  { id:'k28', name:'Ersatzschläuche', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k29', name:'Fahrrad Werkzeug', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k30', name:'Bügelschloss (blaues kleines)', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k31', name:'Luftpumpe', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k32', name:'Protektoren Ellbogen/Knie', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k33', name:'Protektoren Ganzkörper', note:'Paul', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip'], persons:['Paul'] },
+  { id:'k34', name:'Trinkflasche (Fahrrad)', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip','Camping'], persons:['Ulrich'] },
+  { id:'k35', name:'Gepäckträger MTB', note:'Bei Kristin — reicht?', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip'], persons:['Kristin'] },
+  { id:'k36', name:'Fahrrad-Rucksack (zusätzlich)', note:'', ort:['Keller'], typ:['MTB'], reise:['MTB-Trip'], persons:['Ulrich'] },
+
+  // KELLER - Sport
+  { id:'k37', name:'Longshirt (Sport)', note:'', ort:['Keller'], typ:['Sport','Kleidung'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'k38', name:'Kurze Hose (Laufen)', note:'', ort:['Keller'], typ:['Sport','Kleidung'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k39', name:'Jogging Schuhe', note:'', ort:['Keller'], typ:['Sport'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k40', name:'Gewichte', note:'', ort:['Keller'], typ:['Sport'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k41', name:'Knie-Bandagen', note:'', ort:['Keller'], typ:['Sport'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'k42', name:'Outdoor Sandalen', note:'', ort:['Keller'], typ:['Sport','Outdoor'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'k43', name:'Wanderstöcke', note:'', ort:['Keller'], typ:['Outdoor','Sport'], reise:['Camping','Alpin'], persons:['Ulrich'] },
+  { id:'k44', name:'Regenjacke', note:'', ort:['Keller'], typ:['Outdoor','Kleidung'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'k45', name:'Bauchtasche', note:'', ort:['Keller'], typ:['Sport','Orga'], reise:['Camping','MTB-Trip','Badeurlaub'], persons:['Ulrich'] },
+
+  // KELLER - Sport Winter
+  { id:'k46', name:'Mütze', note:'', ort:['Keller'], typ:['Kleidung'], reise:['Winterurlaub','Alpin'], persons:['Ulrich'] },
+  { id:'k47', name:'Lange Unterhose', note:'', ort:['Keller'], typ:['Kleidung'], reise:['Winterurlaub','Alpin'], persons:['Ulrich'] },
+  { id:'k48', name:'Handschuhe (Winter)', note:'', ort:['Keller'], typ:['Kleidung'], reise:['Winterurlaub','Alpin'], persons:['Ulrich'] },
+  { id:'k49', name:'Langes Unterhemd', note:'', ort:['Keller'], typ:['Kleidung'], reise:['Winterurlaub','Alpin'], persons:['Ulrich'] },
+
+  // KELLER - Spielen
+  { id:'k50', name:'Tischtennis', note:'', ort:['Keller'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k51', name:'Volleyball', note:'', ort:['Keller'], typ:['Spiele'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'k52', name:'Federball', note:'', ort:['Keller'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k53', name:'Basketball', note:'', ort:['Keller'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k54', name:'Volleyballnetz', note:'', ort:['Keller'], typ:['Spiele'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'k55', name:'Beach-Ball', note:'', ort:['Keller'], typ:['Spiele'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'k56', name:'Frisbee', note:'', ort:['Keller'], typ:['Spiele'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+
+  // KELLER - Baden
+  { id:'k57', name:'Strandzelt', note:'', ort:['Keller'], typ:['Baden'], reise:['Badeurlaub','Camping'], persons:['Ulrich'] },
+
+  // KELLER - Camping
+  { id:'k58', name:'Zelt', note:'Imprägnieren!!', ort:['Keller'], typ:['Camping'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k59', name:'Isomatten', note:'', ort:['Keller'], typ:['Camping'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'k60', name:'Heringe', note:'', ort:['Keller'], typ:['Camping'], reise:['Camping'], persons:['Ulrich'] },
+
+  // OG2 - Kleidung
+  { id:'o2_1', name:'Bettwäsche', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping'], persons:['Ulrich','Kristin'] },
+  { id:'o2_2', name:'Lange Hosen', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'o2_3', name:'Socken', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'o2_4', name:'T-Shirts', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'o2_5', name:'Longshirts', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'o2_6', name:'Badehose', note:'', ort:['OG2'], typ:['Kleidung','Baden'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'o2_7', name:'Fleece / Hoody', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'o2_8', name:'Lange Outdoorhose', note:'2. Regalbrett von oben', ort:['OG2'], typ:['Kleidung','Outdoor'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'o2_9', name:'Knirscherschiene', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'o2_10', name:'Warme Socken', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','Alpin','Winterurlaub'], persons:['Ulrich'] },
+  { id:'o2_11', name:'Packsäcke (blau)', note:'Ganz oben im Regal', ort:['OG2'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'o2_12', name:'Unterhosen', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'o2_13', name:'Schlafsack', note:'', ort:['OG2'], typ:['Camping'], reise:['Camping','Alpin'], persons:['Ulrich'] },
+  { id:'o2_14', name:'Schlafsack', note:'', ort:['OG2'], typ:['Camping'], reise:['Camping','Alpin'], persons:['Kristin'] },
+  { id:'o2_15', name:'Schlafsack', note:'', ort:['OG2'], typ:['Camping'], reise:['Camping'], persons:['Paul'] },
+  { id:'o2_16', name:'Schlafsack', note:'', ort:['OG2'], typ:['Camping'], reise:['Camping'], persons:['Moritz'] },
+  { id:'o2_17', name:'Kurze Hosen', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'o2_18', name:'Leinenhemd', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Camping','Städtetrip','Badeurlaub'], persons:['Ulrich'] },
+  { id:'o2_19', name:'Schicke Sachen / Hemd', note:'', ort:['OG2'], typ:['Kleidung'], reise:['Städtetrip','Badeurlaub'], persons:['Ulrich'] },
+  { id:'o2_20', name:'Ventilator', note:'', ort:['OG2'], typ:['Orga'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+
+  // OG1
+  { id:'o1_1', name:'Rasierapparat', note:'', ort:['OG1'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'o1_2', name:'Handtücher Outdoor', note:'In Camping-Tasche + 2 kleine normale', ort:['OG1'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub'], persons:['Ulrich'] },
+  { id:'o1_3', name:'Autan / Medizinbeutel', note:'', ort:['OG1'], typ:['Orga'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+
+  // EG - Orga
+  { id:'e1', name:'Küchenrolle', note:'', ort:['EG'], typ:['Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e2', name:'Dose Kontaktlinsen', note:'', ort:['EG'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e3', name:'Weiße Decke', note:'Wieder rein ins Auto', ort:['EG'], typ:['Orga'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e4', name:'Gelber Keramik-Schwimmer Frischwasser', note:'Im Auto / Seitentasche', ort:['EG','Auto/Camper'], typ:['Camping'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e5', name:'Sport- und Camping-Tasche', note:'', ort:['EG'], typ:['Orga'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'e6', name:'Schuhtasche', note:'', ort:['EG'], typ:['Orga'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+
+  // EG - Daypack
+  { id:'e7', name:'Beutel vorne im Auto', note:'', ort:['EG'], typ:['Orga'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'e8', name:'Brille (normal)', note:'3x Brillen + Etuis', ort:['EG'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e9', name:'Sonnenbrille', note:'Stabiles Etui', ort:['EG'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e10', name:'Sling Bag', note:'', ort:['EG'], typ:['Orga'], reise:['Camping','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e11', name:'Packtaschen', note:'', ort:['EG'], typ:['Orga'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+
+  // EG - Basics
+  { id:'e12', name:'Handy', note:'', ort:['EG'], typ:['Technik'], reise:['Immer'], persons:['Ulrich'] },
+  { id:'e13', name:'Haustürschlüssel', note:'', ort:['EG'], typ:['Orga'], reise:['Immer'], persons:['Ulrich'] },
+  { id:'e14', name:'Sonnencreme', note:'', ort:['EG'], typ:['Orga'], reise:['Camping','Badeurlaub','MTB-Trip'], persons:['Ulrich'] },
+  { id:'e15', name:'Akku + Ladekabel', note:'2x', ort:['EG'], typ:['Technik'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+
+  // EG - Technik
+  { id:'e16', name:'Laptop', note:'', ort:['EG'], typ:['Technik'], reise:['Camping','Städtetrip'], persons:['Ulrich'] },
+  { id:'e17', name:'iPad', note:'', ort:['EG'], typ:['Technik'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e18', name:'AirPods / AirPods Max', note:'', ort:['EG'], typ:['Technik'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e19', name:'Fahrradbeleuchtung', note:'2x', ort:['EG'], typ:['MTB','Technik'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'e20', name:'KfW Laptop', note:'', ort:['EG'], typ:['Technik'], reise:['Camping','Städtetrip'], persons:['Ulrich'] },
+
+  // EG - Kleider
+  { id:'e21', name:'Birkenstock', note:'', ort:['EG'], typ:['Kleidung'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'e22', name:'Turnschuhe Freizeit', note:'', ort:['EG'], typ:['Kleidung'], reise:['Camping','Städtetrip','Badeurlaub'], persons:['Ulrich'] },
+  { id:'e23', name:'Fahrradhelm', note:'', ort:['EG'], typ:['MTB','Outdoor'], reise:['Camping','MTB-Trip'], persons:['Ulrich'] },
+  { id:'e24', name:'Regenjacke (EG)', note:'', ort:['EG'], typ:['Kleidung','Outdoor'], reise:['Camping','MTB-Trip','Alpin','Städtetrip'], persons:['Ulrich'] },
+  { id:'e25', name:'Warme Jacke', note:'', ort:['EG'], typ:['Kleidung'], reise:['Camping','Alpin','Winterurlaub'], persons:['Ulrich'] },
+
+  // EG - Dokumente
+  { id:'e26', name:'Geldbeutel', note:'', ort:['EG'], typ:['Dokumente'], reise:['Immer'], persons:['Ulrich'] },
+  { id:'e27', name:'Kindle', note:'', ort:['EG'], typ:['Technik'], reise:['Camping','Badeurlaub','Alpin'], persons:['Ulrich'] },
+  { id:'e28', name:'Personalausweis', note:'', ort:['EG'], typ:['Dokumente'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e29', name:'EC-Karte Comdirect', note:'Bargeld im Ausland kostenlos', ort:['EG'], typ:['Dokumente'], reise:['Camping','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e30', name:'Fahrzeugschein', note:'', ort:['EG'], typ:['Dokumente'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub'], persons:['Ulrich'] },
+  { id:'e31', name:'Führerschein', note:'', ort:['EG'], typ:['Dokumente'], reise:['Camping','MTB-Trip','Alpin','Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+  { id:'e32', name:'Fremdwährung', note:'', ort:['EG'], typ:['Dokumente'], reise:['Badeurlaub','Städtetrip'], persons:['Ulrich'] },
+
+  // EG - Spiele
+  { id:'e33', name:'Zug um Zug', note:'', ort:['EG'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e34', name:'Karten (Unicorn, Arschloch, Skat, Doppelkopf)', note:'', ort:['EG'], typ:['Spiele'], reise:['Camping','Badeurlaub'], persons:['Ulrich'] },
+  { id:'e35', name:'Cascadia', note:'', ort:['EG'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e36', name:'Karuba', note:'', ort:['EG'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e37', name:'Alhambra', note:'', ort:['EG'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e38', name:'Siedler von Catan', note:'', ort:['EG'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e39', name:'Schach', note:'', ort:['EG'], typ:['Spiele'], reise:['Camping'], persons:['Ulrich'] },
+
+  // EG - Essen
+  { id:'e40', name:'Butter', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e41', name:'Joghurt', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e42', name:'Trinkflasche / Thermoskanne', note:'', ort:['EG'], typ:['Küche'], reise:['Camping','MTB-Trip','Alpin'], persons:['Ulrich'] },
+  { id:'e43', name:'Frischwassertank', note:'', ort:['EG'], typ:['Camping'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e44', name:'Marmelade', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e45', name:'Äpfel', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e46', name:'Milch', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e47', name:'Essen Kühlschrank / Brote', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e48', name:'Nudeln', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e49', name:'Pesto', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e50', name:'Honig', note:'', ort:['EG'], typ:['Essen'], reise:['Camping'], persons:['Ulrich'] },
+
+  // EG - Küche
+  { id:'e51', name:'Geschirrtücher / Lappen / Schwamm', note:'', ort:['EG'], typ:['Küche'], reise:['Camping'], persons:['Ulrich'] },
+  { id:'e52', name:'Müsli / Porridge (Box)', note:'', ort:['EG'], typ:['Essen','Küche'], reise:['Camping'], persons:['Ulrich'] },
+];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let state = {
+  items: [],
+  session: { reisetypen: [], persons: ['Ulrich'], orte: [] },
+  activeOrtFilter: null,
+  activeTypFilter: null,
+  showPacked: true,
+};
+
+let editingId = null;
+let editModal = { ort: [], typ: [], reise: [], persons: [] };
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('packliste_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state.items = parsed.items || DEFAULT_ITEMS;
+      state.session = parsed.session || state.session;
+    } else {
+      state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+    }
+  } catch(e) { state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS)); }
+}
+
+function saveState() {
+  localStorage.setItem('packliste_v2', JSON.stringify({ items: state.items, session: state.session }));
+}
+
+// ══════════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name === 'pack') renderPackList();
+  if (name === 'stats') renderStats();
+  if (name === 'manage') renderManageList();
+  if (name === 'setup') renderSetup();
+}
+
+// ══════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════
+function renderSetup() {
+  // Reisetypen
+  const rtGrid = document.getElementById('reisetyp-grid');
+  rtGrid.innerHTML = REISETYPEN.map(rt => `
+    <div class="toggle-card ${state.session.reisetypen.includes(rt)?'active':''}" onclick="toggleSession('reisetypen','${rt}')">
+      <div class="tc-icon">${REISETYP_ICONS[rt]||'📦'}</div>
+      <div class="tc-label">${rt}</div>
+    </div>`).join('');
+
+  // Personen
+  const pGrid = document.getElementById('person-grid');
+  pGrid.innerHTML = PERSONS.map(p => `
+    <div class="person-card ${state.session.persons.includes(p)?'active':''}" onclick="toggleSession('persons','${p}')">
+      <div class="person-avatar">${PERSON_INITIALS[p]}</div>
+      <div class="p-name">${p}</div>
+    </div>`).join('');
+
+  // Orte
+  const oGrid = document.getElementById('ort-grid');
+  oGrid.innerHTML = ORTE.map(o => `
+    <div class="toggle-card ${state.session.orte.includes(o)?'active':''}" onclick="toggleSession('orte','${o}')">
+      <div class="tc-icon">${ORT_ICONS[o]||'📍'}</div>
+      <div class="tc-label">${o}</div>
+    </div>`).join('');
+}
+
+function toggleSession(key, val) {
+  const arr = state.session[key];
+  const i = arr.indexOf(val);
+  if (i >= 0) arr.splice(i, 1); else arr.push(val);
+  saveState();
+  renderSetup();
+}
+
+function startSession() {
+  if (state.session.reisetypen.length === 0) {
+    alert('Bitte mindestens einen Reisetyp auswählen.');
+    return;
+  }
+  state.activeOrtFilter = null;
+  state.activeTypFilter = null;
+  showScreen('pack');
+}
+
+// ══════════════════════════════════════════════
+// PACK SCREEN
+// ══════════════════════════════════════════════
+function getSessionItems() {
+  const { reisetypen, persons, orte } = state.session;
+  return state.items.filter(item => {
+    // Reisetyp match
+    const rtMatch = item.reise.some(r => reisetypen.includes(r) || r === 'Immer');
+    if (!rtMatch) return false;
+    // Person match
+    const pMatch = item.persons.some(p => persons.includes(p));
+    if (!pMatch) return false;
+    // Ort match (if any selected)
+    if (orte.length > 0) {
+      const oMatch = item.ort.some(o => orte.includes(o));
+      if (!oMatch) return false;
+    }
+    return true;
+  });
+}
+
+function isItemFullyPacked(item) {
+  const persons = state.session.persons.filter(p => item.persons.includes(p));
+  return persons.every(p => item.packedBy && item.packedBy[p]);
+}
+
+function renderPackList() {
+  const sessionItems = getSessionItems();
+  const search = document.getElementById('search-input').value.toLowerCase();
+
+  // Update header
+  const packed = sessionItems.filter(isItemFullyPacked).length;
+  const total = sessionItems.length;
+  document.getElementById('pack-title').textContent = state.session.reisetypen.join(' + ') || 'Packen';
+  document.getElementById('pack-sub').textContent = `${packed} / ${total} gepackt`;
+  const pct = total > 0 ? Math.round(packed/total*100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  // Build filter chips
+  const ortCounts = {};
+  const typCounts = {};
+  sessionItems.forEach(item => {
+    item.ort.forEach(o => { if (!ortCounts[o]) ortCounts[o]=0; if (!isItemFullyPacked(item)) ortCounts[o]++; });
+    item.typ.forEach(t => { if (!typCounts[t]) typCounts[t]=0; if (!isItemFullyPacked(item)) typCounts[t]++; });
+  });
+
+  const filterRow = document.getElementById('filter-row');
+  let chips = `<div class="chip ${!state.activeOrtFilter && !state.activeTypFilter && state.showPacked ? 'active':''}" onclick="setFilter(null,null,true)">Alle</div>`;
+  chips += `<div class="chip ${!state.showPacked && !state.activeOrtFilter && !state.activeTypFilter ? 'active':''}" onclick="setFilter(null,null,false)">Offen 🔴</div>`;
+  ORTE.filter(o => ortCounts[o] > 0 || (state.activeOrtFilter === o)).forEach(o => {
+    chips += `<div class="chip ${state.activeOrtFilter===o?'active':''}" onclick="setFilter('${o}',null,${state.showPacked})">${ORT_ICONS[o]||''} ${o} (${ortCounts[o]||0})</div>`;
+  });
+  TYPEN.filter(t => typCounts[t] > 0).forEach(t => {
+    chips += `<div class="chip ${state.activeTypFilter===t?'active':''}" onclick="setFilter(null,'${t}',${state.showPacked})">${t}</div>`;
+  });
+  filterRow.innerHTML = chips;
+
+  // Filter items
+  let visible = sessionItems.filter(item => {
+    if (!state.showPacked && isItemFullyPacked(item)) return false;
+    if (state.activeOrtFilter && !item.ort.includes(state.activeOrtFilter)) return false;
+    if (state.activeTypFilter && !item.typ.includes(state.activeTypFilter)) return false;
+    if (search && !item.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // Group by Ort
+  const grouped = {};
+  visible.forEach(item => {
+    const key = item.ort[0] || 'Sonstiges';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(item);
+  });
+
+  const container = document.getElementById('pack-list');
+  if (visible.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Alles gepackt!</p></div>`;
+    return;
+  }
+
+  let html = '';
+  const ortOrder = ['Keller', 'EG', 'OG1', 'OG2', 'Auto/Camper', 'Sonstiges'];
+  ortOrder.filter(o => grouped[o]).forEach(ort => {
+    const items = grouped[ort];
+    html += `<div class="section-label">${ORT_ICONS[ort]||'📍'} ${ort}</div><div class="items-list">`;
+    items.forEach(item => {
+      const fullyPacked = isItemFullyPacked(item);
+      const sessionPersons = state.session.persons.filter(p => item.persons.includes(p));
+      const multiPerson = sessionPersons.length > 1;
+
+      html += `<div class="item-card ${fullyPacked?'packed':''}" id="card-${item.id}">`;
+      if (!multiPerson) {
+        const p = sessionPersons[0];
+        const checked = item.packedBy && item.packedBy[p];
+        html += `<div class="checkbox ${checked?'checked':''}" onclick="togglePerson('${item.id}','${p}')">
+          <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1.5,5 4.5,8 10.5,1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+      } else {
+        const allChecked = sessionPersons.every(p => item.packedBy && item.packedBy[p]);
+        html += `<div class="checkbox ${allChecked?'checked':''}" onclick="toggleAllPersons('${item.id}')">
+          <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1.5,5 4.5,8 10.5,1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+      }
+
+      html += `<div class="item-body">
+        <div class="item-name">${item.name}</div>`;
+      if (item.note) html += `<div class="item-note">💬 ${item.note}</div>`;
+      if (multiPerson) {
+        html += `<div class="item-badges">`;
+        sessionPersons.forEach(p => {
+          const checked = item.packedBy && item.packedBy[p];
+          html += `<span class="badge badge-person" style="${checked?'opacity:0.4;text-decoration:line-through':''}" onclick="togglePerson('${item.id}','${p}')">${p}</span>`;
+        });
+        html += `</div>`;
+      } else {
+        html += `<div class="item-badges">`;
+        item.typ.slice(0,2).forEach(t => html += `<span class="badge badge-typ">${t}</span>`);
+        html += `</div>`;
+      }
+      html += `</div>`; // item-body
+      html += `<button class="item-expand-btn" onclick="openEditModal('${item.id}')">⋯</button>`;
+      html += `</div>`; // item-card
+    });
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function setFilter(ort, typ, showPacked) {
+  state.activeOrtFilter = ort;
+  state.activeTypFilter = typ;
+  state.showPacked = showPacked;
+  renderPackList();
+}
+
+function togglePerson(itemId, person) {
+  const item = state.items.find(i => i.id === itemId);
+  if (!item) return;
+  if (!item.packedBy) item.packedBy = {};
+  item.packedBy[person] = !item.packedBy[person];
+  saveState();
+  renderPackList();
+}
+
+function toggleAllPersons(itemId) {
+  const item = state.items.find(i => i.id === itemId);
+  if (!item) return;
+  if (!item.packedBy) item.packedBy = {};
+  const sessionPersons = state.session.persons.filter(p => item.persons.includes(p));
+  const allChecked = sessionPersons.every(p => item.packedBy[p]);
+  sessionPersons.forEach(p => item.packedBy[p] = !allChecked);
+  saveState();
+  renderPackList();
+}
+
+function resetPacked() {
+  const sessionItems = getSessionItems();
+  sessionItems.forEach(item => { item.packedBy = {}; });
+  saveState();
+  renderPackList();
+}
+
+// ══════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════
+function renderStats() {
+  const sessionItems = getSessionItems();
+  const packed = sessionItems.filter(isItemFullyPacked).length;
+  const total = sessionItems.length;
+  const open = total - packed;
+
+  let html = `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Items gesamt</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${packed}</div><div class="stat-label">Gepackt ✓</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--accent2)">${open}</div><div class="stat-label">Noch offen</div></div>
+    <div class="stat-card"><div class="stat-num">${Math.round(packed/total*100)||0}%</div><div class="stat-label">Fortschritt</div></div>
+  </div>`;
+
+  // Per Ort
+  html += `<div class="section-label">Nach Ort</div><div class="items-list">`;
+  ORTE.forEach(ort => {
+    const ortItems = sessionItems.filter(i => i.ort.includes(ort));
+    if (!ortItems.length) return;
+    const ortPacked = ortItems.filter(isItemFullyPacked).length;
+    const pct = Math.round(ortPacked/ortItems.length*100);
+    html += `<div class="item-card">
+      <div class="item-body">
+        <div class="item-name">${ORT_ICONS[ort]} ${ort}</div>
+        <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="item-note" style="margin-top:4px">${ortPacked} / ${ortItems.length} gepackt</div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Per Person
+  html += `<div class="section-label">Nach Person</div><div class="items-list">`;
+  state.session.persons.forEach(person => {
+    const pItems = sessionItems.filter(i => i.persons.includes(person));
+    if (!pItems.length) return;
+    const pPacked = pItems.filter(i => i.packedBy && i.packedBy[person]).length;
+    const pct = Math.round(pPacked/pItems.length*100);
+    html += `<div class="item-card">
+      <div class="item-body">
+        <div class="item-name">${person}</div>
+        <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="item-note" style="margin-top:4px">${pPacked} / ${pItems.length} gepackt</div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  document.getElementById('stats-content').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// MANAGE
+// ══════════════════════════════════════════════
+function renderManageList() {
+  const search = document.getElementById('manage-search').value.toLowerCase();
+  let items = state.items;
+  if (search) items = items.filter(i => i.name.toLowerCase().includes(search));
+
+  // Group by ort
+  const grouped = {};
+  items.forEach(item => {
+    const key = item.ort[0] || 'Sonstiges';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(item);
+  });
+
+  let html = '';
+  const ortOrder = ['Keller', 'EG', 'OG1', 'OG2', 'Auto/Camper', 'Sonstiges'];
+  ortOrder.filter(o => grouped[o]).forEach(ort => {
+    html += `<div class="section-label">${ORT_ICONS[ort]||''} ${ort} (${grouped[ort].length})</div><div class="items-list">`;
+    grouped[ort].forEach(item => {
+      html += `<div class="manage-item">
+        <div class="manage-item-name">${item.name}</div>
+        <button class="manage-edit-btn" onclick="openEditModal('${item.id}')">✏️</button>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('manage-list').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════
+function openAddModal() {
+  editingId = null;
+  editModal = { ort: ['EG'], typ: [], reise: [], persons: ['Ulrich'] };
+  document.getElementById('modal-title').textContent = 'Neues Item';
+  document.getElementById('edit-name').value = '';
+  document.getElementById('edit-note').value = '';
+  renderModalChips();
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn-secondary" onclick="closeModalDirect()">Abbrechen</button>
+    <button class="btn-primary" onclick="saveItem()">Hinzufügen</button>`;
+  document.getElementById('item-modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  editingId = id;
+  editModal = { ort: [...item.ort], typ: [...item.typ], reise: [...item.reise], persons: [...item.persons] };
+  document.getElementById('modal-title').textContent = 'Item bearbeiten';
+  document.getElementById('edit-name').value = item.name;
+  document.getElementById('edit-note').value = item.note || '';
+  renderModalChips();
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn-danger" onclick="deleteItem('${id}')">Löschen</button>
+    <button class="btn-primary" onclick="saveItem()">Speichern</button>`;
+  document.getElementById('item-modal').classList.add('open');
+}
+
+function renderModalChips() {
+  document.getElementById('edit-ort').innerHTML = ORTE.map(o =>
+    `<div class="chip-option ${editModal.ort.includes(o)?'selected':''}" onclick="toggleEditTag('ort','${o}')">${o}</div>`).join('');
+  document.getElementById('edit-typ').innerHTML = TYPEN.map(t =>
+    `<div class="chip-option ${editModal.typ.includes(t)?'selected':''}" onclick="toggleEditTag('typ','${t}')">${t}</div>`).join('');
+  document.getElementById('edit-reise').innerHTML = REISETYPEN.map(r =>
+    `<div class="chip-option ${editModal.reise.includes(r)?'selected':''}" onclick="toggleEditTag('reise','${r}')">${r}</div>`).join('');
+  document.getElementById('edit-persons').innerHTML = PERSONS.map(p =>
+    `<div class="chip-option ${editModal.persons.includes(p)?'selected':''}" onclick="toggleEditTag('persons','${p}')">${p}</div>`).join('');
+}
+
+function toggleEditTag(key, val) {
+  const arr = editModal[key];
+  const i = arr.indexOf(val);
+  if (i >= 0) arr.splice(i,1); else arr.push(val);
+  renderModalChips();
+}
+
+function saveItem() {
+  const name = document.getElementById('edit-name').value.trim();
+  if (!name) { alert('Bitte einen Namen eingeben.'); return; }
+  if (editingId) {
+    const item = state.items.find(i => i.id === editingId);
+    item.name = name;
+    item.note = document.getElementById('edit-note').value.trim();
+    item.ort = [...editModal.ort];
+    item.typ = [...editModal.typ];
+    item.reise = [...editModal.reise];
+    item.persons = [...editModal.persons];
+  } else {
+    state.items.push({
+      id: 'custom_' + Date.now(),
+      name, note: document.getElementById('edit-note').value.trim(),
+      ort: [...editModal.ort], typ: [...editModal.typ],
+      reise: [...editModal.reise], persons: [...editModal.persons],
+      packedBy: {}
+    });
+  }
+  saveState();
+  closeModalDirect();
+  renderManageList();
+}
+
+function deleteItem(id) {
+  state.items = state.items.filter(i => i.id !== id);
+  saveState();
+  closeModalDirect();
+  renderManageList();
+}
+
+function closeModal(e) { if (e.target.id === 'item-modal') closeModalDirect(); }
+function closeModalDirect() { document.getElementById('item-modal').classList.remove('open'); }
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+loadState();
+renderSetup();
+</script>
+</body>
+</html>
