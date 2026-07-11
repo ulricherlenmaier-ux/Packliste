@@ -619,17 +619,27 @@ let state = {
 let editingId = null;
 let editModal = { ort: [], typ: [], reise: [], persons: [] };
 
+// Stellt sicher, dass jedes Item alle erwarteten Felder als Array/Objekt hat.
+// Schützt vor Abstürzen, wenn Items aus älteren Datenständen, Import oder
+// Cloud-Sync einzelne Felder (z.B. "ort") gar nicht erst enthalten.
+function normalizeItems(items) {
+  return (items || []).map(item => ({
+    note: '', ort: [], typ: [], reise: [], persons: [], packedBy: {},
+    ...item,
+  }));
+}
+
 function loadState() {
   try {
     const saved = localStorage.getItem('packliste_v2');
     if (saved) {
       const parsed = JSON.parse(saved);
-      state.items = parsed.items || DEFAULT_ITEMS;
+      state.items = normalizeItems(parsed.items || DEFAULT_ITEMS);
       state.session = { ...state.session, ...(parsed.session || {}) };
     } else {
-      state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+      state.items = normalizeItems(JSON.parse(JSON.stringify(DEFAULT_ITEMS)));
     }
-  } catch(e) { state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS)); }
+  } catch(e) { state.items = normalizeItems(JSON.parse(JSON.stringify(DEFAULT_ITEMS))); }
 }
 
 function saveState() {
@@ -650,7 +660,7 @@ window.__packlisteCloud = {
     if (!data) return;
     window.__packlisteCloud.applyingRemote = true;
     try {
-      state.items = data.items || state.items;
+      state.items = normalizeItems(data.items || state.items);
       // Defensiv mergen statt ersetzen: fehlende Felder (z.B. aus älteren
       // Datenständen ohne "orte") fallen sonst auf undefined statt auf
       // den bestehenden Default zurück und lassen renderPackList() abstürzen.
@@ -707,8 +717,8 @@ function importJSON(event) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed.items || !Array.isArray(parsed.items)) throw new Error('invalid');
-      state.items = parsed.items;
-      state.session = parsed.session || state.session;
+      state.items = normalizeItems(parsed.items);
+      state.session = { ...state.session, ...(parsed.session || {}) };
       saveState();
       renderManageList();
       renderPackList();
