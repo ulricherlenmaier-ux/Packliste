@@ -634,7 +634,30 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem('packliste_v2', JSON.stringify({ items: state.items, session: state.session }));
+  if (window.__packlisteCloud && window.__packlisteCloud.onLocalChange && !window.__packlisteCloud.applyingRemote) {
+    window.__packlisteCloud.onLocalChange();
+  }
 }
+
+// ══════════════════════════════════════════════
+// CLOUD-SYNC-BRÜCKE (wird vom Firebase-Modul unten befüllt)
+// ══════════════════════════════════════════════
+window.__packlisteCloud = {
+  applyingRemote: false,
+  onLocalChange: null, // vom Firebase-Modul gesetzt: pusht aktuellen Stand in die Cloud
+  getSnapshot: () => ({ items: state.items, session: state.session }),
+  applyRemote: (data) => {
+    if (!data) return;
+    window.__packlisteCloud.applyingRemote = true;
+    state.items = data.items || state.items;
+    state.session = data.session || state.session;
+    saveState();
+    renderManageList();
+    renderPackList();
+    renderStats();
+    window.__packlisteCloud.applyingRemote = false;
+  },
+};
 
 // ══════════════════════════════════════════════
 // EXPORT / IMPORT (z.B. für Sicherung in iCloud Drive)
@@ -1096,6 +1119,61 @@ function closeModalDirect() { document.getElementById('item-modal').classList.re
 // ══════════════════════════════════════════════
 loadState();
 renderSetup();
+</script>
+
+<!-- ══════════════════════════════════════════════
+     CLOUD-SYNC (Firebase Realtime Database)
+     Automatischer Import beim Öffnen + Live-Sync über
+     Geräte hinweg. localStorage bleibt Offline-Fallback.
+     ══════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC-8C1dEMw-6Tv85crmK2SXVq-hccZ-QG8",
+    authDomain: "packliste-f1334.firebaseapp.com",
+    databaseURL: "https://packliste-f1334-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "packliste-f1334",
+    storageBucket: "packliste-f1334.firebasestorage.app",
+    messagingSenderId: "288955197269",
+    appId: "1:288955197269:web:8046064d25c9962488b1dc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const dataRef = ref(db, 'packliste');
+
+  function pushToCloud() {
+    set(dataRef, window.__packlisteCloud.getSnapshot()).catch((err) => {
+      console.warn('Cloud-Sync fehlgeschlagen (bleibt lokal gespeichert):', err);
+    });
+  }
+
+  signInAnonymously(auth)
+    .then(() => {
+      // Ab jetzt lokale Änderungen automatisch in die Cloud pushen
+      window.__packlisteCloud.onLocalChange = pushToCloud;
+
+      // Live-Listener: läuft beim Öffnen sofort (Auto-Import) und bei jeder
+      // Änderung auf einem anderen Gerät erneut
+      onValue(dataRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+          // Cloud noch leer (erstes Gerät) → aktuellen lokalen Stand hochladen
+          pushToCloud();
+        } else {
+          window.__packlisteCloud.applyRemote(data);
+        }
+      }, (err) => {
+        console.warn('Cloud-Listener fehlgeschlagen (bleibt lokal gespeichert):', err);
+      });
+    })
+    .catch((err) => {
+      console.warn('Cloud-Login fehlgeschlagen (App läuft rein lokal weiter):', err);
+    });
 </script>
 </body>
 </html>
