@@ -625,7 +625,7 @@ function loadState() {
     if (saved) {
       const parsed = JSON.parse(saved);
       state.items = parsed.items || DEFAULT_ITEMS;
-      state.session = parsed.session || state.session;
+      state.session = { ...state.session, ...(parsed.session || {}) };
     } else {
       state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
     }
@@ -649,13 +649,21 @@ window.__packlisteCloud = {
   applyRemote: (data) => {
     if (!data) return;
     window.__packlisteCloud.applyingRemote = true;
-    state.items = data.items || state.items;
-    state.session = data.session || state.session;
-    saveState();
-    renderManageList();
-    renderPackList();
-    renderStats();
-    window.__packlisteCloud.applyingRemote = false;
+    try {
+      state.items = data.items || state.items;
+      // Defensiv mergen statt ersetzen: fehlende Felder (z.B. aus älteren
+      // Datenständen ohne "orte") fallen sonst auf undefined statt auf
+      // den bestehenden Default zurück und lassen renderPackList() abstürzen.
+      state.session = { ...state.session, ...(data.session || {}) };
+      saveState();
+      renderManageList();
+      renderPackList();
+      renderStats();
+    } catch (err) {
+      console.warn('Fehler beim Anwenden der Cloud-Daten:', err);
+    } finally {
+      window.__packlisteCloud.applyingRemote = false;
+    }
   },
 };
 
@@ -789,7 +797,9 @@ function startSession() {
 // PACK SCREEN
 // ══════════════════════════════════════════════
 function getSessionItems() {
-  const { reisetypen, persons, orte } = state.session;
+  const reisetypen = state.session.reisetypen || [];
+  const persons = state.session.persons || [];
+  const orte = state.session.orte || [];
   return state.items.filter(item => {
     // Reisetyp match
     const rtMatch = item.reise.some(r => reisetypen.includes(r) || r === 'Immer');
