@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VANDerer Grundriss</title>
+<style>
+  :root {
+    --bg: #F2F0EB; --surface: #FFF; --border: #D8D4CC;
+    --text: #1A1814; --text2: #6B6560; --accent: #3D6B4F;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px 60px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; text-align: center; }
+  .views { display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 380px; }
+  .view-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text2); margin-bottom: 8px; }
+  .orient { display: flex; justify-content: space-between; font-size: 10px; color: #AAA; padding: 0 2px; margin-bottom: 3px; }
+  svg text { font-family: var(--font); }
+  .zone { cursor: pointer; }
+  .zone > rect { transition: filter 0.15s; }
+  .zone:active > rect { filter: brightness(0.82); }
+  .info-panel { background: var(--surface); border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); min-height: 70px; }
+  .info-name { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .info-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .info-items { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+  .info-items li { font-size: 13px; color: var(--text); line-height: 1.35; padding-left: 18px; position: relative; }
+  .info-items li::before { content: '·'; position: absolute; left: 6px; color: var(--accent); font-weight: 700; }
+  .info-count { font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 6px; }
+  .info-note { font-size: 12px; color: #B08030; font-style: italic; margin-top: 6px; }
+
+  /* Edit UI */
+  .info-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { border: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--font); transition: opacity 0.15s; }
+  .btn:active { opacity: 0.7; }
+  .btn-edit { background: var(--accent-light, #EAF2ED); color: var(--accent); flex: 1; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-ghost { background: #F0EEE9; color: var(--text2); }
+  .edit-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .edit-row input { flex: 1; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 13px; font-family: var(--font); background: var(--surface); color: var(--text); }
+  .edit-row input:focus { outline: none; border-color: var(--accent); }
+  .edit-del { background: #FDECEA; color: #C0392B; border: none; border-radius: 7px; width: 32px; height: 32px;
+    font-size: 16px; cursor: pointer; flex-shrink: 0; }
+  .edit-add { background: var(--accent-light, #EAF2ED); color: var(--accent); border: 1px dashed var(--accent);
+    border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;
+    margin-top: 4px; font-family: var(--font); }
+
+  /* Export bar */
+  .toolbar { display: flex; gap: 8px; width: 100%; max-width: 380px; margin-bottom: 4px; }
+  .toolbar .btn { flex: 1; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 500; }
+  .toast.show { opacity: 1; }
+  :root { --accent-light: #EAF2ED; }
+  .info-hint { font-size: 12px; color: #BBB; text-align: center; padding: 8px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; }
+  .li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .ld { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+  .maße-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mc { background: var(--surface); border-radius: 10px; padding: 10px 12px; border: 1px solid var(--border); }
+  .ml { font-size: 11px; color: var(--text2); margin-bottom: 2px; }
+  .mv { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .compass { font-size: 11px; color: #AAA; text-align: center; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<h1>VANDerer · Berlingo</h1>
+<p class="sub">Livingroom Modul + Aufstelldach<br>Tap auf Zone für Details · Inhalte editierbar</p>
+
+<div class="toolbar">
+  <button class="btn btn-ghost" onclick="exportJSON()">⬇ Export JSON</button>
+  <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Import JSON</button>
+  <button class="btn btn-ghost" onclick="resetInventory()">↺ Reset</button>
+  <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importJSON(event)">
+</div>
+
+<div class="views">
+<div>
+  <div class="view-label">🗺 Draufsicht</div>
+  <div class="orient"><span>← Fahrerseite</span><span>Beifahrerseite →</span></div>
+
+  <!--
+    LAYOUT NACH SKIZZE (Heckklappe unten = Fahrtrichtung oben):
+
+    Skizze zeigt (von oben nach unten):
+    1. Lounge — volle Breite (über Gang + links + rechts)
+    2. Links: Bank (schmal) | Gang Mitte | Rechts: Schublade (oben) + Ceran (unten)
+       Seitentasche links außen auf Höhe Bank/Spüle
+       Seitentasche rechts außen auf Höhe Schublade/Ceran
+    3. Links: Spüle | Gang | Rechts: (Ceran weiter)
+    4. Links: Kanister □□ | Gang | Rechts: Auszug
+    5. Heckklappe — volle Breite
+
+    Koordinaten (SVG, Fahrtrichtung = oben):
+    Gesamtbreite innen: 20..260 = 240px
+    Gang: x=110..160 (50px breit)
+    Links: x=20..108 (88px)
+    Rechts: x=162..260 (98px)
+    Seitentasche links: x=4..18 (außen)
+    Seitentasche rechts: x=262..276 (außen)
+  -->
+
+  <svg viewBox="0 0 280 680" width="100%" style="max-width:280px;display:block;margin:0 auto;">
+
+    <!-- Außenkontur -->
+    <rect x="4" y="4" width="272" height="672" rx="34" fill="#E8E4DC" stroke="#B8B0A4" stroke-width="2"/>
+
+    <!-- FRONT -->
+    <rect x="20" y="4" width="240" height="68" rx="20" fill="#D0CCC4" stroke="#B0ACA4" stroke-width="1"/>
+    <text x="140" y="41" text-anchor="middle" font-size="10" fill="#999" font-weight="600">FRONT · Motorhaube</text>
+
+    <!-- Windschutzscheibe -->
+    <rect x="34" y="68" width="212" height="32" rx="5" fill="#BDD4E0" opacity="0.75" stroke="#98B8C8" stroke-width="1"/>
+    <text x="140" y="88" text-anchor="middle" font-size="9" fill="#5A7A8A">Windschutzscheibe</text>
+
+    <!-- Armaturenbrett -->
+    <rect x="20" y="96" width="240" height="16" rx="4" fill="#C49A72" opacity="0.3" stroke="#A07850" stroke-width="1"/>
+    <text x="140" y="108" text-anchor="middle" font-size="8" fill="#8A6040" font-weight="600">Armaturenbrett</text>
+
+    <!-- FAHRERSITZ -->
+    <g class="zone" onclick="showInfo('fahrersitz')">
+      <rect x="20" y="116" width="98" height="80" rx="8" fill="#B0A494" stroke="#8A7A6A" stroke-width="1.5"/>
+      <text x="69" y="152" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Fahrersitz</text>
+      <text x="69" y="167" text-anchor="middle" font-size="9" fill="#EEE">Ulrich</text>
+    </g>
+
+    <!-- KÜHLBOX -->
+    <g class="zone" onclick="showInfo('kuehlbox')">
+      <rect x="120" y="126" width="40" height="60" rx="6" fill="#4A7A8A" stroke="#2A5A6A" stroke-width="2"/>
+      <text x="140" y="152" text-anchor="middle" font-size="8" fill="#FFF" font-weight="700">Kühl-</text>
+      <text x="140" y="165" text-anchor="middle" font-size="8" fill="#FFF" font-weight="700">box</text>
+    </g>
+
+    <!-- BEIFAHRERSITZ -->
+    <g class="zone" onclick="showInfo('beifahrersitz')">
+      <rect x="162" y="116" width="98" height="80" rx="8" fill="#B0A494" stroke="#8A7A6A" stroke-width="1.5"/>
+      <text x="211" y="152" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Beifahrersitz</text>
+      <text x="211" y="167" text-anchor="middle" font-size="9" fill="#EEE">Kristin</text>
+    </g>
+
+    <!-- Schiebetüren -->
+    <line x1="20" y1="206" x2="260" y2="206" stroke="#B0A8A0" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="140" y="216" text-anchor="middle" font-size="8" fill="#B0A8A0">── Schiebetüren ──</text>
+
+    <!-- RÜCKSITZBANK -->
+    <g class="zone" onclick="showInfo('ruecksitzbank')">
+      <rect x="20" y="221" width="240" height="58" rx="8" fill="#C0B4A8" stroke="#9A8E84" stroke-width="1.5"/>
+      <rect x="27" y="228" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
+      <rect x="104" y="228" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
+      <rect x="181" y="228" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
+      <text x="140" y="254" text-anchor="middle" font-size="10" fill="#FFF" font-weight="600">Rücksitzbank · 3 Sitze</text>
+    </g>
+
+    <line x1="20" y1="289" x2="260" y2="289" stroke="#A8A09A" stroke-width="2"/>
+
+    <!-- ══ LOUNGE — volle Breite ══ -->
+    <g class="zone" onclick="showInfo('lounge')">
+      <rect x="20" y="293" width="240" height="72" rx="8" fill="#8A9BAA" stroke="#6A7A8A" stroke-width="2"/>
+      <rect x="26" y="298" width="228" height="12" rx="3" fill="#9ABBC8" opacity="0.6"/>
+      <text x="140" y="332" text-anchor="middle" font-size="13" fill="#FFF" font-weight="700">Lounge</text>
+      <text x="140" y="350" text-anchor="middle" font-size="9" fill="#D0E8F0">volle Breite · Sitzpolster</text>
+    </g>
+
+    <!-- ══ AB HIER: Gang Mitte längs (anklickbar) ══ -->
+    <g class="zone" onclick="showInfo('gang')">
+      <rect x="110" y="369" width="50" height="243" fill="#D8D4CC" opacity="0.8"/>
+      <text x="135" y="500" text-anchor="middle" font-size="8" fill="#8A8480" font-weight="600" transform="rotate(-90,135,500)">── Gang · Schlafsäcke ──</text>
+    </g>
+
+    <!-- ══ SEITENTASCHE LINKS — nur auf Höhe Bank+Spüle ══ -->
+    <g class="zone" onclick="showInfo('seitentasche_links')">
+      <rect x="2" y="369" width="20" height="180" rx="4" fill="#6A7A8A" stroke="#4A5A6A" stroke-width="1.5"/>
+      <text x="12" y="459" text-anchor="middle" font-size="7" fill="#FFF" transform="rotate(-90,11,458)">Seitentasche</text>
+    </g>
+
+    <!-- ══ SEITENTASCHE RECHTS — nur auf Höhe Schublade+Ceran ══ -->
+    <g class="zone" onclick="showInfo('seitentasche_rechts')">
+      <rect x="258" y="369" width="20" height="180" rx="4" fill="#6A7A8A" stroke="#4A5A6A" stroke-width="1.5"/>
+      <text x="268" y="459" text-anchor="middle" font-size="7" fill="#FFF" transform="rotate(90,269,458)">Seitentasche</text>
+    </g>
+
+    <!-- ══ LINKS: Bank ══ -->
+    <g class="zone" onclick="showInfo('bank')">
+      <rect x="20" y="369" width="88" height="68" rx="7" fill="#7A9BAA" stroke="#5A7A8A" stroke-width="2"/>
+      <rect x="26" y="374" width="76" height="10" rx="3" fill="#9ABBC8" opacity="0.5"/>
+      <text x="64" y="402" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Bank</text>
+      <text x="64" y="418" text-anchor="middle" font-size="8" fill="#D0E8F0">aufklappbar</text>
+      <text x="64" y="430" text-anchor="middle" font-size="8" fill="#D0E8F0">Stauraum ↓</text>
+    </g>
+
+    <!-- ══ LINKS: Spüle ══ -->
+    <g class="zone" onclick="showInfo('spuele')">
+      <rect x="20" y="441" width="88" height="114" rx="7" fill="#5A8A6A" stroke="#3A6A4A" stroke-width="2"/>
+      <rect x="30" y="452" width="48" height="34" rx="4" fill="none" stroke="#C8ECD8" stroke-width="2"/>
+      <circle cx="46" cy="463" r="5" fill="none" stroke="#C8ECD8" stroke-width="1.5"/>
+      <text x="64" y="510" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Spüle</text>
+      <text x="64" y="525" text-anchor="middle" font-size="8" fill="#C8ECD8">+ Seifenspender</text>
+    </g>
+
+    <!-- ══ LINKS: Kanister (gleiche Höhe wie Auszug) ══ -->
+    <g class="zone" onclick="showInfo('kanister')">
+      <rect x="20" y="559" width="88" height="53" rx="7" fill="#3A6A4A" stroke="#2A5034" stroke-width="2"/>
+      <rect x="27" y="568" width="32" height="34" rx="4" fill="#5A8A6A" stroke="#C8ECD8" stroke-width="1.5"/>
+      <rect x="65" y="568" width="32" height="34" rx="4" fill="#5A8A6A" stroke="#C8ECD8" stroke-width="1.5"/>
+      <text x="43" y="588" text-anchor="middle" font-size="7" fill="#C8ECD8">Abw.</text>
+      <text x="81" y="588" text-anchor="middle" font-size="7" fill="#C8ECD8">Frisch</text>
+    </g>
+
+    <!-- ══ RECHTS: Küchenzeile mit integrierter Schublade + Ceran ══ -->
+    <g class="zone" onclick="showInfo('kueche')">
+      <rect x="162" y="369" width="98" height="186" rx="7" fill="#C4956A" stroke="#9A7048" stroke-width="2"/>
+      <!-- Arbeitsplatte oben -->
+      <rect x="168" y="375" width="86" height="6" rx="2" fill="#D4A57A"/>
+      <text x="211" y="396" text-anchor="middle" font-size="10" fill="#FFF" font-weight="700">Küchenzeile</text>
+      <!-- integrierte Schublade längs (links in der Küchenzeile) -->
+      <rect x="168" y="406" width="24" height="92" rx="4" fill="#B07850" stroke="#FFE8CC" stroke-width="1.5"/>
+      <text x="180" y="452" text-anchor="middle" font-size="7" fill="#FFE8CC" transform="rotate(-90,180,452)">Schublade</text>
+      <!-- Ceran ganz rechts, untereinander -->
+      <circle cx="234" cy="430" r="14" fill="none" stroke="#FFE8CC" stroke-width="2.5"/>
+      <text x="234" y="434" text-anchor="middle" font-size="8" fill="#FFE8CC">①</text>
+      <circle cx="234" cy="466" r="14" fill="none" stroke="#FFE8CC" stroke-width="2.5"/>
+      <text x="234" y="470" text-anchor="middle" font-size="8" fill="#FFE8CC">②</text>
+      <text x="222" y="512" text-anchor="middle" font-size="8" fill="#FFE8CC">Stauraum / Fächer</text>
+    </g>
+
+    <!-- ══ RECHTS: Auszug (ganz unten rechts, gleiche Höhe wie Kanister) ══ -->
+    <g class="zone" onclick="showInfo('heckauszug')">
+      <rect x="162" y="559" width="98" height="53" rx="7" fill="#8B5E3C" stroke="#6A4028" stroke-width="2"/>
+      <text x="211" y="581" text-anchor="middle" font-size="10" fill="#FFF" font-weight="700">Auszug</text>
+      <text x="211" y="595" text-anchor="middle" font-size="8" fill="#F0D0B0">Gas · Geschirr</text>
+      <text x="211" y="607" text-anchor="middle" font-size="8" fill="#F0D0B0">offene Fächer</text>
+    </g>
+
+    <!-- ══ HECKKLAPPE — volle Breite ══ -->
+    <rect x="20" y="616" width="240" height="34" rx="10" fill="#C8C4BC" stroke="#B0ACA4" stroke-width="1.5"/>
+    <text x="140" y="637" text-anchor="middle" font-size="10" fill="#6A6860" font-weight="600">HECKKLAPPE</text>
+
+    <!-- Fahrtrichtungspfeil -->
+    <polygon points="140,2 133,11 147,11" fill="#888"/>
+
+    <!-- Seitenlabels -->
+    <text x="4" y="460" text-anchor="middle" font-size="7" fill="#AAA" transform="rotate(-90,4,460)">FAHRERSEITE</text>
+    <text x="276" y="460" text-anchor="middle" font-size="7" fill="#AAA" transform="rotate(90,276,460)">BEIFAHRERSEITE</text>
+
+  </svg>
+  <div class="compass">▲ Fahrtrichtung</div>
+</div>
+
+<!-- INFO PANEL -->
+<div class="info-panel" id="info-panel">
+  <span class="info-hint">Tap auf eine Zone für Details</span>
+</div>
+
+<!-- LEGENDE -->
+<div>
+  <div class="view-label">Legende</div>
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:#8A9BAA"></div>Lounge (volle Breite)</div>
+    <div class="li"><div class="ld" style="background:#7A9BAA"></div>Bank aufklappbar (links)</div>
+    <div class="li"><div class="ld" style="background:#5A8A6A"></div>Spüle (links)</div>
+    <div class="li"><div class="ld" style="background:#3A6A4A"></div>Kanister Abw.+Frisch (links)</div>
+    <div class="li"><div class="ld" style="background:#C4956A"></div>Küchenzeile + Schublade + Ceran (rechts)</div>
+    <div class="li"><div class="ld" style="background:#8B5E3C"></div>Auszug (rechts unten)</div>
+    <div class="li"><div class="ld" style="background:#6A7A8A"></div>Seitentaschen (außen)</div>
+    <div class="li"><div class="ld" style="background:#4A7A8A"></div>Kühlbox VANDerer</div>
+    <div class="li"><div class="ld" style="background:#D8D4CC; border:1px solid #B0ACA4"></div>Gang (Mitte, längs)</div>
+  </div>
+</div>
+
+<!-- MAßE -->
+<div>
+  <div class="view-label">📐 Maße</div>
+  <div class="maße-grid">
+    <div class="mc"><div class="ml">Fahrzeuglänge</div><div class="mv">4,75 m</div></div>
+    <div class="mc"><div class="ml">Fahrzeugbreite</div><div class="mv">1,85 m</div></div>
+    <div class="mc"><div class="ml">Aufstelldach-Bett</div><div class="mv">1,14 × 1,90 m</div></div>
+    <div class="mc"><div class="ml">Liegefläche unten</div><div class="mv">1,20 × 2,00 m</div></div>
+    <div class="mc"><div class="ml">Frischwasser</div><div class="mv">12 Liter</div></div>
+    <div class="mc"><div class="ml">Kühlbox</div><div class="mv">14 Liter</div></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const DEFAULT_INFO = {
+  fahrersitz: { name:'🚗 Fahrersitz / Vorderraum', items:[
+    'USB-C Ladekabel lang (für vorne)',
+    'Box für Items (hängt am Fahrersitz, im Türfach unten)'
+  ]},
+  beifahrersitz: { name:'🚗 Beifahrersitz · Kristin (rechts)', items:[
+    'Handschuhfach', 'Platz für Daypack, Sling Bag, Beutel für die Fahrt'
+  ]},
+  kuehlbox: { name:'🧊 Kühlbox VANDerer (Mittelkonsole)', items:[
+    'VANDerer Kompressor-Kühlbox 14L',
+    'Getränke, Snacks — während der Fahrt erreichbar'
+  ]},
+  ruecksitzbank: { name:'💺 Rücksitzbank · 3 Sitze (Fahrposition)', items:[
+    'Drei Einzelsitze mit Isofix',
+    'Während der Fahrt nutzbar',
+    'Klappt nach hinten → wird zur Lounge'
+  ]},
+  lounge: { name:'🛋 Lounge (umgeklappte Rückbank, volle Breite)', items:[
+    'Diverse Aufbewahrung',
+    'Zurrgurte / Spanngurte / Expander',
+    'Schwarze Techniktasche (Ladekabel, Karabiner etc.)',
+    'Laken',
+    '5× Verdunkelung',
+    'Hängematte',
+    '2 Picknickdecken (gelb)',
+    'Größere Plane (grau)',
+    'Heringe (rot)',
+    'Camping-Hammer',
+    'Campinglampe',
+    'Mehrfachsteckdose',
+    'Sitzpolster oben → nachts Teil der Liegefläche'
+  ]},
+  bank: { name:'🪑 Bank (Fahrerseite links)', note:'Noch Platz frei!', items:[
+    'Kehrblech und Feger',
+    'Markisenset',
+    'Ladekabel Auto',
+    '2 Helinox Stühle, 1 Helinox Tisch, 1 Hocker'
+  ]},
+  spuele: { name:'🚿 Spüle (Fahrerseite links)', items:[
+    'Edelstahl-Spüle mit Seifenspender',
+    'Elektrische Wasserpumpe',
+    'Sitzt oberhalb der Wasserkanister'
+  ]},
+  kanister: { name:'💧 Wasserkanister (links unten)', items:[
+    'Abwasserkanister (12L)',
+    'Frischwasserkanister (12L)'
+  ]},
+  seitentasche_links: { name:'👜 Seitentasche · Fahrerseite (links)', items:[
+    'Geschirrtuch, Lappen, Schwamm',
+    'Gefriertüten',
+    'Toilettenpapier',
+    'Mülltüten',
+    'Gummis',
+    'Gelber Keramikschwimmer (Wasser)',
+    'Wäscheklammern',
+    'Waschmittel',
+    'Stirnlampe',
+    'Textilerfrischer',
+    'Spüli'
+  ]},
+  seitentasche_rechts: { name:'👜 Seitentasche · Beifahrerseite (rechts)', items:[
+    'Tee (Pfefferminz / Guten-Morgen-Tee)',
+    'Medizinbeutel / Verbandtasche:',
+    '  Pflaster, Erkältung, Salbe, Zecken,',
+    '  Karte, Mückenspray, Wundverband,',
+    '  Natron, Gallseife'
+  ]},
+  kueche: { name:'🍳 Küchenzeile (Beifahrerseite rechts)', items:[
+    'Schublade: Besteck für vier, Schere, Taschenmesser, Küchenmesser',
+    '2 Ceran-Kochplatten'
+  ]},
+  heckauszug: { name:'🔧 Auszug (Beifahrerseite rechts, hinten)', items:[
+    '4 Becher',
+    '4 Müslischalen, 3 Klappschalen',
+    '3 große + 4 kleine Teller',
+    'Kleines Schneidebrett',
+    'Cafetera (Espressokocher)',
+    'Gaskocher für Außenkochen',
+    'Geschirr, Töpfe in offenen Fächern'
+  ]},
+  gang: { name:'↔️ Gang (Mitte)', items:[
+    '2× Schlafsäcke'
+  ]},
+};
+
+// ── State management ──
+let INFO = {};
+let currentZone = null;
+let editMode = false;
+
+const STORAGE_KEY = 'vanderer_inventory_v1';
+
+function loadInventory() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Merge: keep default names/notes, use saved items
+      INFO = JSON.parse(JSON.stringify(DEFAULT_INFO));
+      Object.keys(parsed).forEach(k => {
+        if (INFO[k]) {
+          if (parsed[k].items) INFO[k].items = parsed[k].items;
+          if ('note' in parsed[k]) INFO[k].note = parsed[k].note;
+        } else {
+          INFO[k] = parsed[k];
+        }
+      });
+    } else {
+      INFO = JSON.parse(JSON.stringify(DEFAULT_INFO));
+    }
+  } catch(e) {
+    INFO = JSON.parse(JSON.stringify(DEFAULT_INFO));
+  }
+}
+
+function saveInventory() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(INFO)); } catch(e) {}
+}
+
+function showInfo(key) {
+  currentZone = key;
+  editMode = false;
+  renderPanel();
+}
+
+function renderPanel() {
+  const d = INFO[currentZone];
+  const panel = document.getElementById('info-panel');
+  if (!d) { panel.innerHTML = '<span class="info-hint">Tap auf eine Zone für Details</span>'; return; }
+
+  let html = `<div class="info-name">${d.name}</div>`;
+
+  if (!editMode) {
+    // VIEW mode
+    if (d.items && d.items.length) {
+      html += `<div class="info-count">${d.items.length} ${d.items.length===1?'Eintrag':'Einträge'}</div>`;
+      html += `<ul class="info-items">`;
+      d.items.forEach(it => { html += `<li>${escapeHtml(it)}</li>`; });
+      html += `</ul>`;
+    } else {
+      html += `<div class="info-count">Keine Einträge</div>`;
+    }
+    if (d.note) html += `<div class="info-note">⚠️ ${escapeHtml(d.note)}</div>`;
+    html += `<div class="info-actions"><button class="btn btn-edit" onclick="enterEdit()">✏️ Bearbeiten</button></div>`;
+  } else {
+    // EDIT mode
+    html += `<div id="edit-rows">`;
+    (d.items || []).forEach((it, i) => {
+      html += `<div class="edit-row">
+        <input type="text" value="${escapeAttr(it)}" oninput="updateItem(${i}, this.value)">
+        <button class="edit-del" onclick="deleteItem(${i})">✕</button>
+      </div>`;
+    });
+    html += `</div>`;
+    html += `<button class="edit-add" onclick="addItem()">+ Eintrag hinzufügen</button>`;
+    html += `<div class="info-actions">
+      <button class="btn btn-accent" onclick="saveEdit()" style="flex:1">✓ Fertig</button>
+    </div>`;
+  }
+  panel.innerHTML = html;
+}
+
+function enterEdit() { editMode = true; renderPanel(); }
+
+function updateItem(i, val) {
+  if (INFO[currentZone] && INFO[currentZone].items) INFO[currentZone].items[i] = val;
+}
+
+function deleteItem(i) {
+  if (INFO[currentZone] && INFO[currentZone].items) {
+    INFO[currentZone].items.splice(i, 1);
+    renderPanel();
+  }
+}
+
+function addItem() {
+  if (!INFO[currentZone].items) INFO[currentZone].items = [];
+  INFO[currentZone].items.push('');
+  renderPanel();
+  // focus last input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#edit-rows input');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }, 30);
+}
+
+function saveEdit() {
+  // remove empty trailing items
+  if (INFO[currentZone].items) {
+    INFO[currentZone].items = INFO[currentZone].items.filter(x => x.trim() !== '');
+  }
+  saveInventory();
+  editMode = false;
+  renderPanel();
+  toast('Gespeichert');
+}
+
+async function exportJSON() {
+  const data = JSON.stringify(INFO, null, 2);
+  const filename = 'vanderer-inventar.json';
+
+  // Try iOS/mobile Share Sheet first (lets user pick "In Dateien sichern", AirDrop, Mail, etc.)
+  try {
+    const file = new File([data], filename, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'VANDerer Inventar' });
+      toast('Geteilt');
+      return;
+    }
+  } catch (err) {
+    // user cancelled share, or not supported — fall through to download
+    if (err && err.name === 'AbortError') return; // user cancelled, don't double-export
+  }
+
+  // Fallback: classic download (Mac / desktop browsers)
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('JSON exportiert');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      INFO = parsed;
+      saveInventory();
+      if (currentZone) renderPanel();
+      toast('JSON importiert');
+    } catch(err) {
+      toast('Fehler beim Import');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetInventory() {
+  INFO = JSON.parse(JSON.stringify(DEFAULT_INFO));
+  saveInventory();
+  if (currentZone) renderPanel();
+  toast('Zurückgesetzt');
+}
+
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+let toastTimer;
+function toast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// Init
+loadInventory();
+</script>
+</body>
+</html>
