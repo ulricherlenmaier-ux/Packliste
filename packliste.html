@@ -410,6 +410,10 @@
       <label class="form-label">Personen (leer = Ulrich)</label>
       <div class="chip-select" id="edit-persons"></div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Zeitpunkt</label>
+      <div class="chip-select" id="edit-abreise"></div>
+    </div>
     <div class="modal-actions" id="modal-actions"></div>
   </div>
 </div>
@@ -614,17 +618,18 @@ let state = {
   activeOrtFilter: null,
   activeTypFilter: null,
   showPacked: true,
+  hideAbreiseItems: false,
 };
 
 let editingId = null;
-let editModal = { ort: [], typ: [], reise: [], persons: [] };
+let editModal = { ort: [], typ: [], reise: [], persons: [], beiAbreise: false };
 
 // Stellt sicher, dass jedes Item alle erwarteten Felder als Array/Objekt hat.
 // Schützt vor Abstürzen, wenn Items aus älteren Datenständen, Import oder
 // Cloud-Sync einzelne Felder (z.B. "ort") gar nicht erst enthalten.
 function normalizeItems(items) {
   return (items || []).map(item => ({
-    note: '', ort: [], typ: [], reise: [], persons: [], packedBy: {},
+    note: '', ort: [], typ: [], reise: [], persons: [], packedBy: {}, beiAbreise: false,
     ...item,
   }));
 }
@@ -854,6 +859,7 @@ function renderPackList() {
   const filterRow = document.getElementById('filter-row');
   let chips = `<div class="chip ${!state.activeOrtFilter && !state.activeTypFilter && state.showPacked ? 'active':''}" onclick="setFilter(null,null,true)">Alle</div>`;
   chips += `<div class="chip ${!state.showPacked && !state.activeOrtFilter && !state.activeTypFilter ? 'active':''}" onclick="setFilter(null,null,false)">Offen 🔴</div>`;
+  chips += `<div class="chip ${state.hideAbreiseItems ? 'active':''}" onclick="toggleAbreiseFilter()">🧳 Schon packbar</div>`;
   ORTE.filter(o => ortCounts[o] > 0 || (state.activeOrtFilter === o)).forEach(o => {
     chips += `<div class="chip ${state.activeOrtFilter===o?'active':''}" onclick="setFilter('${o}',null,${state.showPacked})">${ORT_ICONS[o]||''} ${o} (${ortCounts[o]||0})</div>`;
   });
@@ -865,6 +871,7 @@ function renderPackList() {
   // Filter items
   let visible = sessionItems.filter(item => {
     if (!state.showPacked && isItemFullyPacked(item)) return false;
+    if (state.hideAbreiseItems && item.beiAbreise) return false;
     if (state.activeOrtFilter && !item.ort.includes(state.activeOrtFilter)) return false;
     if (state.activeTypFilter && !item.typ.includes(state.activeTypFilter)) return false;
     if (search && !item.name.toLowerCase().includes(search)) return false;
@@ -936,6 +943,11 @@ function setFilter(ort, typ, showPacked) {
   state.activeOrtFilter = ort;
   state.activeTypFilter = typ;
   state.showPacked = showPacked;
+  renderPackList();
+}
+
+function toggleAbreiseFilter() {
+  state.hideAbreiseItems = !state.hideAbreiseItems;
   renderPackList();
 }
 
@@ -1055,7 +1067,7 @@ function renderManageList() {
 // ══════════════════════════════════════════════
 function openAddModal() {
   editingId = null;
-  editModal = { ort: ['EG'], typ: [], reise: [], persons: ['Ulrich'] };
+  editModal = { ort: ['EG'], typ: [], reise: [], persons: ['Ulrich'], beiAbreise: false };
   document.getElementById('modal-title').textContent = 'Neues Item';
   document.getElementById('edit-name').value = '';
   document.getElementById('edit-note').value = '';
@@ -1070,7 +1082,7 @@ function openEditModal(id) {
   const item = state.items.find(i => i.id === id);
   if (!item) return;
   editingId = id;
-  editModal = { ort: [...item.ort], typ: [...item.typ], reise: [...item.reise], persons: [...item.persons] };
+  editModal = { ort: [...item.ort], typ: [...item.typ], reise: [...item.reise], persons: [...item.persons], beiAbreise: !!item.beiAbreise };
   document.getElementById('modal-title').textContent = 'Item bearbeiten';
   document.getElementById('edit-name').value = item.name;
   document.getElementById('edit-note').value = item.note || '';
@@ -1090,6 +1102,8 @@ function renderModalChips() {
     `<div class="chip-option ${editModal.reise.includes(r)?'selected':''}" onclick="toggleEditTag('reise','${r}')">${r}</div>`).join('');
   document.getElementById('edit-persons').innerHTML = PERSONS.map(p =>
     `<div class="chip-option ${editModal.persons.includes(p)?'selected':''}" onclick="toggleEditTag('persons','${p}')">${p}</div>`).join('');
+  document.getElementById('edit-abreise').innerHTML =
+    `<div class="chip-option ${editModal.beiAbreise?'selected':''}" onclick="toggleAbreise()">🚪 Bei Abreise (erst kurz vorher packbar)</div>`;
 }
 
 function toggleEditTag(key, val) {
@@ -1099,9 +1113,14 @@ function toggleEditTag(key, val) {
   renderModalChips();
 }
 
+function toggleAbreise() {
+  editModal.beiAbreise = !editModal.beiAbreise;
+  renderModalChips();
+}
+
 function saveItem() {
   const name = document.getElementById('edit-name').value.trim();
-  if (!name) { alert('Bitte einen Namen eingeben.'); return; }
+  if (!name) { toast('Bitte einen Namen eingeben.'); return; }
   if (editingId) {
     const item = state.items.find(i => i.id === editingId);
     item.name = name;
@@ -1110,12 +1129,14 @@ function saveItem() {
     item.typ = [...editModal.typ];
     item.reise = [...editModal.reise];
     item.persons = [...editModal.persons];
+    item.beiAbreise = editModal.beiAbreise;
   } else {
     state.items.push({
       id: 'custom_' + Date.now(),
       name, note: document.getElementById('edit-note').value.trim(),
       ort: [...editModal.ort], typ: [...editModal.typ],
       reise: [...editModal.reise], persons: [...editModal.persons],
+      beiAbreise: editModal.beiAbreise,
       packedBy: {}
     });
   }
