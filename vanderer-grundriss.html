@@ -13,10 +13,10 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { font-family: var(--font); background: var(--bg); color: var(--text);
     min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-    padding: 20px 16px 60px; }
-  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-  .sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; text-align: center; }
-  .views { display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 380px; }
+    padding: 10px 16px 40px; }
+  h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .sub { font-size: 12px; color: var(--text2); margin-bottom: 10px; text-align: center; }
+  .views { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 380px; }
   .view-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text2); margin-bottom: 8px; }
   .orient { display: flex; justify-content: space-between; font-size: 10px; color: #AAA; padding: 0 2px; margin-bottom: 3px; }
   svg text { font-family: var(--font); }
@@ -107,147 +107,135 @@
     Seitentasche rechts: x=262..276 (außen)
   -->
 
-  <svg viewBox="0 0 280 680" width="100%" style="max-width:280px;display:block;margin:0 auto;">
+  <svg viewBox="0 0 280 572" width="100%" style="max-width:280px;display:block;margin:0 auto;">
 
     <!-- Außenkontur -->
-    <rect x="4" y="4" width="272" height="672" rx="34" fill="#E8E4DC" stroke="#B8B0A4" stroke-width="2"/>
-
-    <!-- FRONT -->
-    <rect x="20" y="4" width="240" height="68" rx="20" fill="#D0CCC4" stroke="#B0ACA4" stroke-width="1"/>
-    <text x="140" y="41" text-anchor="middle" font-size="10" fill="#999" font-weight="600">FRONT · Motorhaube</text>
-
-    <!-- Windschutzscheibe -->
-    <rect x="34" y="68" width="212" height="32" rx="5" fill="#BDD4E0" opacity="0.75" stroke="#98B8C8" stroke-width="1"/>
-    <text x="140" y="88" text-anchor="middle" font-size="9" fill="#5A7A8A">Windschutzscheibe</text>
-
-    <!-- Armaturenbrett -->
-    <rect x="20" y="96" width="240" height="16" rx="4" fill="#C49A72" opacity="0.3" stroke="#A07850" stroke-width="1"/>
-    <text x="140" y="108" text-anchor="middle" font-size="8" fill="#8A6040" font-weight="600">Armaturenbrett</text>
+    <rect x="4" y="4" width="272" height="564" rx="34" fill="#E8E4DC" stroke="#B8B0A4" stroke-width="2"/>
 
     <!-- FAHRERSITZ -->
     <g class="zone" onclick="showInfo('fahrersitz')">
-      <rect x="20" y="116" width="98" height="80" rx="8" fill="#B0A494" stroke="#8A7A6A" stroke-width="1.5"/>
-      <text x="69" y="152" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Fahrersitz</text>
-      <text x="69" y="167" text-anchor="middle" font-size="9" fill="#EEE">Ulrich</text>
+      <rect x="20" y="8" width="98" height="80" rx="8" fill="#B0A494" stroke="#8A7A6A" stroke-width="1.5"/>
+      <text x="69" y="44" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Fahrersitz</text>
+      <text x="69" y="59" text-anchor="middle" font-size="9" fill="#EEE">Ulrich</text>
     </g>
 
     <!-- KÜHLBOX -->
     <g class="zone" onclick="showInfo('kuehlbox')">
-      <rect x="120" y="126" width="40" height="60" rx="6" fill="#4A7A8A" stroke="#2A5A6A" stroke-width="2"/>
-      <text x="140" y="152" text-anchor="middle" font-size="8" fill="#FFF" font-weight="700">Kühl-</text>
-      <text x="140" y="165" text-anchor="middle" font-size="8" fill="#FFF" font-weight="700">box</text>
+      <rect x="120" y="18" width="40" height="60" rx="6" fill="#4A7A8A" stroke="#2A5A6A" stroke-width="2"/>
+      <text x="140" y="44" text-anchor="middle" font-size="8" fill="#FFF" font-weight="700">Kühl-</text>
+      <text x="140" y="57" text-anchor="middle" font-size="8" fill="#FFF" font-weight="700">box</text>
     </g>
 
     <!-- BEIFAHRERSITZ -->
     <g class="zone" onclick="showInfo('beifahrersitz')">
-      <rect x="162" y="116" width="98" height="80" rx="8" fill="#B0A494" stroke="#8A7A6A" stroke-width="1.5"/>
-      <text x="211" y="152" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Beifahrersitz</text>
-      <text x="211" y="167" text-anchor="middle" font-size="9" fill="#EEE">Kristin</text>
+      <rect x="162" y="8" width="98" height="80" rx="8" fill="#B0A494" stroke="#8A7A6A" stroke-width="1.5"/>
+      <text x="211" y="44" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Beifahrersitz</text>
+      <text x="211" y="59" text-anchor="middle" font-size="9" fill="#EEE">Kristin</text>
     </g>
 
     <!-- Schiebetüren -->
-    <line x1="20" y1="206" x2="260" y2="206" stroke="#B0A8A0" stroke-width="1.5" stroke-dasharray="5,4"/>
-    <text x="140" y="216" text-anchor="middle" font-size="8" fill="#B0A8A0">── Schiebetüren ──</text>
+    <line x1="20" y1="98" x2="260" y2="98" stroke="#B0A8A0" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="140" y="108" text-anchor="middle" font-size="8" fill="#B0A8A0">── Schiebetüren ──</text>
 
     <!-- RÜCKSITZBANK -->
     <g class="zone" onclick="showInfo('ruecksitzbank')">
-      <rect x="20" y="221" width="240" height="58" rx="8" fill="#C0B4A8" stroke="#9A8E84" stroke-width="1.5"/>
-      <rect x="27" y="228" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
-      <rect x="104" y="228" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
-      <rect x="181" y="228" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
-      <text x="140" y="254" text-anchor="middle" font-size="10" fill="#FFF" font-weight="600">Rücksitzbank · 3 Sitze</text>
+      <rect x="20" y="113" width="240" height="58" rx="8" fill="#C0B4A8" stroke="#9A8E84" stroke-width="1.5"/>
+      <rect x="27" y="120" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
+      <rect x="104" y="120" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
+      <rect x="181" y="120" width="72" height="44" rx="5" fill="#B0A494" stroke="#8A7A6A" stroke-width="1"/>
+      <text x="140" y="146" text-anchor="middle" font-size="10" fill="#FFF" font-weight="600">Rücksitzbank · 3 Sitze</text>
     </g>
 
-    <line x1="20" y1="289" x2="260" y2="289" stroke="#A8A09A" stroke-width="2"/>
+    <line x1="20" y1="181" x2="260" y2="181" stroke="#A8A09A" stroke-width="2"/>
 
     <!-- ══ LOUNGE — volle Breite ══ -->
     <g class="zone" onclick="showInfo('lounge')">
-      <rect x="20" y="293" width="240" height="72" rx="8" fill="#8A9BAA" stroke="#6A7A8A" stroke-width="2"/>
-      <rect x="26" y="298" width="228" height="12" rx="3" fill="#9ABBC8" opacity="0.6"/>
-      <text x="140" y="332" text-anchor="middle" font-size="13" fill="#FFF" font-weight="700">Lounge</text>
-      <text x="140" y="350" text-anchor="middle" font-size="9" fill="#D0E8F0">volle Breite · Sitzpolster</text>
+      <rect x="20" y="185" width="240" height="72" rx="8" fill="#8A9BAA" stroke="#6A7A8A" stroke-width="2"/>
+      <rect x="26" y="190" width="228" height="12" rx="3" fill="#9ABBC8" opacity="0.6"/>
+      <text x="140" y="224" text-anchor="middle" font-size="13" fill="#FFF" font-weight="700">Lounge</text>
+      <text x="140" y="242" text-anchor="middle" font-size="9" fill="#D0E8F0">volle Breite · Sitzpolster</text>
     </g>
 
     <!-- ══ AB HIER: Gang Mitte längs (anklickbar) ══ -->
     <g class="zone" onclick="showInfo('gang')">
-      <rect x="110" y="369" width="50" height="243" fill="#D8D4CC" opacity="0.8"/>
-      <text x="135" y="500" text-anchor="middle" font-size="8" fill="#8A8480" font-weight="600" transform="rotate(-90,135,500)">── Gang · Schlafsäcke ──</text>
+      <rect x="110" y="261" width="50" height="243" fill="#D8D4CC" opacity="0.8"/>
+      <text x="135" y="392" text-anchor="middle" font-size="8" fill="#8A8480" font-weight="600" transform="rotate(-90,135,392)">── Gang · Schlafsäcke ──</text>
     </g>
 
     <!-- ══ SEITENTASCHE LINKS — nur auf Höhe Bank+Spüle ══ -->
     <g class="zone" onclick="showInfo('seitentasche_links')">
-      <rect x="2" y="369" width="20" height="180" rx="4" fill="#6A7A8A" stroke="#4A5A6A" stroke-width="1.5"/>
-      <text x="12" y="459" text-anchor="middle" font-size="7" fill="#FFF" transform="rotate(-90,11,458)">Seitentasche</text>
+      <rect x="2" y="261" width="20" height="180" rx="4" fill="#6A7A8A" stroke="#4A5A6A" stroke-width="1.5"/>
+      <text x="12" y="351" text-anchor="middle" font-size="7" fill="#FFF" transform="rotate(-90,11,350)">Seitentasche</text>
     </g>
 
     <!-- ══ SEITENTASCHE RECHTS — nur auf Höhe Schublade+Ceran ══ -->
     <g class="zone" onclick="showInfo('seitentasche_rechts')">
-      <rect x="258" y="369" width="20" height="180" rx="4" fill="#6A7A8A" stroke="#4A5A6A" stroke-width="1.5"/>
-      <text x="268" y="459" text-anchor="middle" font-size="7" fill="#FFF" transform="rotate(90,269,458)">Seitentasche</text>
+      <rect x="258" y="261" width="20" height="180" rx="4" fill="#6A7A8A" stroke="#4A5A6A" stroke-width="1.5"/>
+      <text x="268" y="351" text-anchor="middle" font-size="7" fill="#FFF" transform="rotate(90,269,350)">Seitentasche</text>
     </g>
 
     <!-- ══ LINKS: Bank ══ -->
     <g class="zone" onclick="showInfo('bank')">
-      <rect x="20" y="369" width="88" height="68" rx="7" fill="#7A9BAA" stroke="#5A7A8A" stroke-width="2"/>
-      <rect x="26" y="374" width="76" height="10" rx="3" fill="#9ABBC8" opacity="0.5"/>
-      <text x="64" y="402" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Bank</text>
-      <text x="64" y="418" text-anchor="middle" font-size="8" fill="#D0E8F0">aufklappbar</text>
-      <text x="64" y="430" text-anchor="middle" font-size="8" fill="#D0E8F0">Stauraum ↓</text>
+      <rect x="20" y="261" width="88" height="68" rx="7" fill="#7A9BAA" stroke="#5A7A8A" stroke-width="2"/>
+      <rect x="26" y="266" width="76" height="10" rx="3" fill="#9ABBC8" opacity="0.5"/>
+      <text x="64" y="294" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Bank</text>
+      <text x="64" y="310" text-anchor="middle" font-size="8" fill="#D0E8F0">aufklappbar</text>
+      <text x="64" y="322" text-anchor="middle" font-size="8" fill="#D0E8F0">Stauraum ↓</text>
     </g>
 
     <!-- ══ LINKS: Spüle ══ -->
     <g class="zone" onclick="showInfo('spuele')">
-      <rect x="20" y="441" width="88" height="114" rx="7" fill="#5A8A6A" stroke="#3A6A4A" stroke-width="2"/>
-      <rect x="30" y="452" width="48" height="34" rx="4" fill="none" stroke="#C8ECD8" stroke-width="2"/>
-      <circle cx="46" cy="463" r="5" fill="none" stroke="#C8ECD8" stroke-width="1.5"/>
-      <text x="64" y="510" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Spüle</text>
-      <text x="64" y="525" text-anchor="middle" font-size="8" fill="#C8ECD8">+ Seifenspender</text>
+      <rect x="20" y="333" width="88" height="114" rx="7" fill="#5A8A6A" stroke="#3A6A4A" stroke-width="2"/>
+      <rect x="30" y="344" width="48" height="34" rx="4" fill="none" stroke="#C8ECD8" stroke-width="2"/>
+      <circle cx="46" cy="355" r="5" fill="none" stroke="#C8ECD8" stroke-width="1.5"/>
+      <text x="64" y="402" text-anchor="middle" font-size="11" fill="#FFF" font-weight="700">Spüle</text>
+      <text x="64" y="417" text-anchor="middle" font-size="8" fill="#C8ECD8">+ Seifenspender</text>
     </g>
 
     <!-- ══ LINKS: Kanister (gleiche Höhe wie Auszug) ══ -->
     <g class="zone" onclick="showInfo('kanister')">
-      <rect x="20" y="559" width="88" height="53" rx="7" fill="#3A6A4A" stroke="#2A5034" stroke-width="2"/>
-      <rect x="27" y="568" width="32" height="34" rx="4" fill="#5A8A6A" stroke="#C8ECD8" stroke-width="1.5"/>
-      <rect x="65" y="568" width="32" height="34" rx="4" fill="#5A8A6A" stroke="#C8ECD8" stroke-width="1.5"/>
-      <text x="43" y="588" text-anchor="middle" font-size="7" fill="#C8ECD8">Abw.</text>
-      <text x="81" y="588" text-anchor="middle" font-size="7" fill="#C8ECD8">Frisch</text>
+      <rect x="20" y="451" width="88" height="53" rx="7" fill="#3A6A4A" stroke="#2A5034" stroke-width="2"/>
+      <rect x="27" y="460" width="32" height="34" rx="4" fill="#5A8A6A" stroke="#C8ECD8" stroke-width="1.5"/>
+      <rect x="65" y="460" width="32" height="34" rx="4" fill="#5A8A6A" stroke="#C8ECD8" stroke-width="1.5"/>
+      <text x="43" y="480" text-anchor="middle" font-size="7" fill="#C8ECD8">Abw.</text>
+      <text x="81" y="480" text-anchor="middle" font-size="7" fill="#C8ECD8">Frisch</text>
     </g>
 
     <!-- ══ RECHTS: Küchenzeile mit integrierter Schublade + Ceran ══ -->
     <g class="zone" onclick="showInfo('kueche')">
-      <rect x="162" y="369" width="98" height="186" rx="7" fill="#C4956A" stroke="#9A7048" stroke-width="2"/>
+      <rect x="162" y="261" width="98" height="186" rx="7" fill="#C4956A" stroke="#9A7048" stroke-width="2"/>
       <!-- Arbeitsplatte oben -->
-      <rect x="168" y="375" width="86" height="6" rx="2" fill="#D4A57A"/>
-      <text x="211" y="396" text-anchor="middle" font-size="10" fill="#FFF" font-weight="700">Küchenzeile</text>
+      <rect x="168" y="267" width="86" height="6" rx="2" fill="#D4A57A"/>
+      <text x="211" y="288" text-anchor="middle" font-size="10" fill="#FFF" font-weight="700">Küchenzeile</text>
       <!-- integrierte Schublade längs (links in der Küchenzeile) -->
-      <rect x="168" y="406" width="24" height="92" rx="4" fill="#B07850" stroke="#FFE8CC" stroke-width="1.5"/>
-      <text x="180" y="452" text-anchor="middle" font-size="7" fill="#FFE8CC" transform="rotate(-90,180,452)">Schublade</text>
+      <rect x="168" y="298" width="24" height="92" rx="4" fill="#B07850" stroke="#FFE8CC" stroke-width="1.5"/>
+      <text x="180" y="344" text-anchor="middle" font-size="7" fill="#FFE8CC" transform="rotate(-90,180,344)">Schublade</text>
       <!-- Ceran ganz rechts, untereinander -->
-      <circle cx="234" cy="430" r="14" fill="none" stroke="#FFE8CC" stroke-width="2.5"/>
-      <text x="234" y="434" text-anchor="middle" font-size="8" fill="#FFE8CC">①</text>
-      <circle cx="234" cy="466" r="14" fill="none" stroke="#FFE8CC" stroke-width="2.5"/>
-      <text x="234" y="470" text-anchor="middle" font-size="8" fill="#FFE8CC">②</text>
-      <text x="222" y="512" text-anchor="middle" font-size="8" fill="#FFE8CC">Stauraum / Fächer</text>
+      <circle cx="234" cy="322" r="14" fill="none" stroke="#FFE8CC" stroke-width="2.5"/>
+      <text x="234" y="326" text-anchor="middle" font-size="8" fill="#FFE8CC">①</text>
+      <circle cx="234" cy="358" r="14" fill="none" stroke="#FFE8CC" stroke-width="2.5"/>
+      <text x="234" y="362" text-anchor="middle" font-size="8" fill="#FFE8CC">②</text>
+      <text x="222" y="404" text-anchor="middle" font-size="8" fill="#FFE8CC">Stauraum / Fächer</text>
     </g>
 
     <!-- ══ RECHTS: Auszug (ganz unten rechts, gleiche Höhe wie Kanister) ══ -->
     <g class="zone" onclick="showInfo('heckauszug')">
-      <rect x="162" y="559" width="98" height="53" rx="7" fill="#8B5E3C" stroke="#6A4028" stroke-width="2"/>
-      <text x="211" y="581" text-anchor="middle" font-size="10" fill="#FFF" font-weight="700">Auszug</text>
-      <text x="211" y="595" text-anchor="middle" font-size="8" fill="#F0D0B0">Gas · Geschirr</text>
-      <text x="211" y="607" text-anchor="middle" font-size="8" fill="#F0D0B0">offene Fächer</text>
+      <rect x="162" y="451" width="98" height="53" rx="7" fill="#8B5E3C" stroke="#6A4028" stroke-width="2"/>
+      <text x="211" y="473" text-anchor="middle" font-size="10" fill="#FFF" font-weight="700">Auszug</text>
+      <text x="211" y="487" text-anchor="middle" font-size="8" fill="#F0D0B0">Gas · Geschirr</text>
+      <text x="211" y="499" text-anchor="middle" font-size="8" fill="#F0D0B0">offene Fächer</text>
     </g>
 
     <!-- ══ HECKKLAPPE — volle Breite ══ -->
-    <rect x="20" y="616" width="240" height="34" rx="10" fill="#C8C4BC" stroke="#B0ACA4" stroke-width="1.5"/>
-    <text x="140" y="637" text-anchor="middle" font-size="10" fill="#6A6860" font-weight="600">HECKKLAPPE</text>
+    <rect x="20" y="508" width="240" height="34" rx="10" fill="#C8C4BC" stroke="#B0ACA4" stroke-width="1.5"/>
+    <text x="140" y="529" text-anchor="middle" font-size="10" fill="#6A6860" font-weight="600">HECKKLAPPE</text>
 
     <!-- Fahrtrichtungspfeil -->
     <polygon points="140,2 133,11 147,11" fill="#888"/>
 
     <!-- Seitenlabels -->
-    <text x="4" y="460" text-anchor="middle" font-size="7" fill="#AAA" transform="rotate(-90,4,460)">FAHRERSEITE</text>
-    <text x="276" y="460" text-anchor="middle" font-size="7" fill="#AAA" transform="rotate(90,276,460)">BEIFAHRERSEITE</text>
+    <text x="4" y="352" text-anchor="middle" font-size="7" fill="#AAA" transform="rotate(-90,4,352)">FAHRERSEITE</text>
+    <text x="276" y="352" text-anchor="middle" font-size="7" fill="#AAA" transform="rotate(90,276,352)">BEIFAHRERSEITE</text>
 
   </svg>
   <div class="compass">▲ Fahrtrichtung</div>
