@@ -1149,7 +1149,7 @@ renderSetup();
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC-8C1dEMw-6Tv85crmK2SXVq-hccZ-QG8",
@@ -1165,10 +1165,26 @@ renderSetup();
   const auth = getAuth(app);
   const db = getDatabase(app);
   const dataRef = ref(db, 'packliste');
+  const backupsRef = ref(db, 'packliste_backups');
 
   function pushToCloud() {
     set(dataRef, window.__packlisteCloud.getSnapshot()).catch((err) => {
       console.warn('Cloud-Sync fehlgeschlagen (bleibt lokal gespeichert):', err);
+    });
+    maybeBackup();
+  }
+
+  // Sicherheitsnetz: bei Bedarf eine Zeitstempel-Kopie unter packliste_backups
+  // ablegen (nicht bei jeder einzelnen Änderung, sonst läuft die Historie voll –
+  // höchstens 1x pro Stunde pro geöffneter Session reicht als Schutz).
+  let lastBackupAt = 0;
+  function maybeBackup() {
+    const now = Date.now();
+    if (now - lastBackupAt < 60 * 60 * 1000) return;
+    lastBackupAt = now;
+    const snapshot = { ...window.__packlisteCloud.getSnapshot(), _backupAt: new Date().toISOString() };
+    push(backupsRef, snapshot).catch((err) => {
+      console.warn('Backup fehlgeschlagen (Hauptdaten sind trotzdem gespeichert):', err);
     });
   }
 
@@ -1186,6 +1202,7 @@ renderSetup();
           pushToCloud();
         } else {
           window.__packlisteCloud.applyRemote(data);
+          maybeBackup();
         }
       }, (err) => {
         console.warn('Cloud-Listener fehlgeschlagen (bleibt lokal gespeichert):', err);
