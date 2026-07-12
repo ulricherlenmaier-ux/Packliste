@@ -82,19 +82,22 @@
 <div class="switcher">
   <button class="switch-btn" id="btn-packliste" onclick="switchApp('packliste')">📦 Packliste</button>
   <button class="switch-btn" id="btn-camper" onclick="switchApp('camper')">🚐 Camper</button>
+  <button class="switch-btn" id="btn-taschen" onclick="switchApp('taschen')">🎒 Taschen</button>
 </div>
 
 <div class="frames">
   <iframe id="frame-packliste" src="packliste.html" title="Packliste"></iframe>
   <iframe id="frame-camper" src="vanderer-grundriss.html" title="Camper"></iframe>
+  <iframe id="frame-taschen" src="taschen.html" title="Taschen"></iframe>
 </div>
 
 <script>
+  const APPS = ['packliste', 'camper', 'taschen'];
   function switchApp(name) {
-    document.getElementById('frame-packliste').classList.toggle('active', name === 'packliste');
-    document.getElementById('frame-camper').classList.toggle('active', name === 'camper');
-    document.getElementById('btn-packliste').classList.toggle('active', name === 'packliste');
-    document.getElementById('btn-camper').classList.toggle('active', name === 'camper');
+    APPS.forEach(a => {
+      document.getElementById('frame-' + a).classList.toggle('active', a === name);
+      document.getElementById('btn-' + a).classList.toggle('active', a === name);
+    });
     localStorage.setItem('shell_last_app', name);
   }
 
