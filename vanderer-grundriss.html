@@ -50,6 +50,17 @@
     border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;
     margin-top: 4px; font-family: var(--font); }
 
+  /* Auspacken-Checkliste */
+  .check-row { display: flex; align-items: center; gap: 10px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .check-box { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border);
+    flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .check-box.checked { background: var(--accent); border-color: var(--accent); }
+  .check-text { flex: 1; font-size: 13px; color: var(--text); cursor: pointer; }
+  .check-text.checked { color: var(--text2); text-decoration: line-through; }
+  .check-del { background: none; border: none; color: #C0392B; font-size: 16px; cursor: pointer;
+    padding: 2px 4px; flex-shrink: 0; }
+
   /* Export bar */
   .toolbar { display: flex; gap: 8px; width: 100%; max-width: 380px; margin-bottom: 4px; }
   .toolbar .btn { flex: 1; }
@@ -272,6 +283,21 @@
     <div class="mc"><div class="ml">Liegefläche unten</div><div class="mv">1,20 × 2,00 m</div></div>
     <div class="mc"><div class="ml">Frischwasser</div><div class="mv">12 Liter</div></div>
     <div class="mc"><div class="ml">Kühlbox</div><div class="mv">14 Liter</div></div>
+  </div>
+</div>
+
+<!-- AUSPACKEN-CHECKLISTE -->
+<div>
+  <div class="view-label" style="display:flex; align-items:center; justify-content:space-between;">
+    <span>🧺 Auspacken-Checkliste</span>
+    <span style="display:flex; gap:10px;">
+      <span style="cursor:pointer; text-decoration:underline;" onclick="resetAuspackChecks()">Häkchen zurücksetzen</span>
+    </span>
+  </div>
+  <div id="auspack-list" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
+  <div class="edit-row" style="margin-top:8px;">
+    <input id="auspack-new-input" placeholder="Neuer Punkt…" onkeydown="if(event.key==='Enter') addAuspackItem()">
+    <button class="edit-del" style="background:var(--accent-light); color:var(--accent); width:auto; padding:0 12px;" onclick="addAuspackItem()">+</button>
   </div>
 </div>
 
@@ -544,8 +570,79 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
+// ══════════════════════════════════════════════
+// AUSPACKEN-CHECKLISTE
+// ══════════════════════════════════════════════
+const DEFAULT_AUSPACK_ITEMS = [
+  { id: 'ap1', text: 'Wasserbehälter ausgeleert?', checked: false },
+  { id: 'ap2', text: 'Gasherd draußen?', checked: false },
+  { id: 'ap3', text: 'Batterie Creabest aufgeladen?', checked: false },
+];
+
+let AUSPACK = [];
+
+function loadAuspack() {
+  try {
+    const saved = localStorage.getItem('vanderer_auspack_v1');
+    AUSPACK = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_AUSPACK_ITEMS));
+  } catch (e) {
+    AUSPACK = JSON.parse(JSON.stringify(DEFAULT_AUSPACK_ITEMS));
+  }
+}
+
+function saveAuspack() {
+  localStorage.setItem('vanderer_auspack_v1', JSON.stringify(AUSPACK));
+}
+
+function renderAuspack() {
+  const list = document.getElementById('auspack-list');
+  list.innerHTML = AUSPACK.map(item => `
+    <div class="check-row">
+      <div class="check-box ${item.checked ? 'checked' : ''}" onclick="toggleAuspackItem('${item.id}')">
+        ${item.checked ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1.5,5 4.5,8 10.5,1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+      </div>
+      <div class="check-text ${item.checked ? 'checked' : ''}" onclick="toggleAuspackItem('${item.id}')">${escapeHtml(item.text)}</div>
+      <button class="check-del" onclick="deleteAuspackItem('${item.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function toggleAuspackItem(id) {
+  const item = AUSPACK.find(i => i.id === id);
+  if (!item) return;
+  item.checked = !item.checked;
+  saveAuspack();
+  renderAuspack();
+}
+
+function addAuspackItem() {
+  const input = document.getElementById('auspack-new-input');
+  const text = input.value.trim();
+  if (!text) return;
+  AUSPACK.push({ id: 'custom_' + Date.now(), text, checked: false });
+  input.value = '';
+  saveAuspack();
+  renderAuspack();
+  toast('Hinzugefügt');
+}
+
+function deleteAuspackItem(id) {
+  AUSPACK = AUSPACK.filter(i => i.id !== id);
+  saveAuspack();
+  renderAuspack();
+}
+
+function resetAuspackChecks() {
+  AUSPACK.forEach(i => i.checked = false);
+  saveAuspack();
+  renderAuspack();
+  toast('Häkchen zurückgesetzt');
+}
+
 // Init
 loadInventory();
+loadAuspack();
+renderAuspack();
 </script>
 </body>
 </html>
