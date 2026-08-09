@@ -619,6 +619,7 @@ let state = {
   activeTypFilter: null,
   showPacked: true,
   hideAbreiseItems: false,
+  hideImmerItems: false,
 };
 
 let editingId = null;
@@ -817,7 +818,7 @@ function getSessionItems() {
   const orte = state.session.orte || [];
   return state.items.filter(item => {
     // Reisetyp match
-    const rtMatch = item.reise.some(r => reisetypen.includes(r) || r === 'Immer');
+    const rtMatch = item.reise.some(r => reisetypen.includes(r) || (r === 'Immer' && !state.hideImmerItems));
     if (!rtMatch) return false;
     // Person match
     const pMatch = item.persons.some(p => persons.includes(p));
@@ -860,6 +861,7 @@ function renderPackList() {
   let chips = `<div class="chip ${!state.activeOrtFilter && !state.activeTypFilter && state.showPacked ? 'active':''}" onclick="setFilter(null,null,true)">Alle</div>`;
   chips += `<div class="chip ${!state.showPacked && !state.activeOrtFilter && !state.activeTypFilter ? 'active':''}" onclick="setFilter(null,null,false)">Offen 🔴</div>`;
   chips += `<div class="chip ${state.hideAbreiseItems ? 'active':''}" onclick="toggleAbreiseFilter()">🧳 Schon packbar</div>`;
+  chips += `<div class="chip ${state.hideImmerItems ? 'active':''}" onclick="toggleImmerFilter()">✅ Nur Reisetyp</div>`;
   ORTE.filter(o => ortCounts[o] > 0 || (state.activeOrtFilter === o)).forEach(o => {
     chips += `<div class="chip ${state.activeOrtFilter===o?'active':''}" onclick="setFilter('${o}',null,${state.showPacked})">${ORT_ICONS[o]||''} ${o} (${ortCounts[o]||0})</div>`;
   });
@@ -948,6 +950,11 @@ function setFilter(ort, typ, showPacked) {
 
 function toggleAbreiseFilter() {
   state.hideAbreiseItems = !state.hideAbreiseItems;
+  renderPackList();
+}
+
+function toggleImmerFilter() {
+  state.hideImmerItems = !state.hideImmerItems;
   renderPackList();
 }
 
